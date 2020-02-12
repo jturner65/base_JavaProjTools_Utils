@@ -5,7 +5,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import base_UI_Objects.IRenderInterface;
+import base_JavaProjTools_IRender.base_Render_Interface.IRenderInterface;
+
+
 /**
  * This class instances objects that are responsible for screen display, and potentially writing out to log files
  * @author john
