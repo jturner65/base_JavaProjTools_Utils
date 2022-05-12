@@ -9,7 +9,7 @@ import base_Utils_Objects.io.MessageObject;
 import base_Utils_Objects.io.MsgCodes;
 
 /**
- * manage a message stream from a launched external process - used to manage output from som training process
+ * manage a message stream from a launched external process
  * @author john
  *
  */
