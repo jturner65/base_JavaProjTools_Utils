@@ -8,7 +8,6 @@ import java.util.*;
  * @author john
  *
  */
-
 public class FileIOManager{
 	//msg object interface
 	protected MessageObject msg;
