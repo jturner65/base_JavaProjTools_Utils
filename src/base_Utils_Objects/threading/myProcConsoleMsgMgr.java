@@ -39,7 +39,7 @@ public abstract class myProcConsoleMsgMgr implements Callable<Boolean> {
 	private void  dispMessage(String str, MsgCodes useCode) {
 		if(msgObj != null) {
 			String typStr = getStreamType(str);			
-			msgObj.dispMessage("messageMgr","call ("+typStr+" Stream Handler)", str, useCode);}
+			msgObj.dispMessage("myProcConsoleMsgMgr","call ("+typStr+" Stream Handler)", str, useCode);}
 		else {				System.out.println(str);	}
 	}//msgObj.dispMessage
 	
