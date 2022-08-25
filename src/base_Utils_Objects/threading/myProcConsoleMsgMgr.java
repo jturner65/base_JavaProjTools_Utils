@@ -15,20 +15,27 @@ import base_Utils_Objects.io.MsgCodes;
  */
 public abstract class myProcConsoleMsgMgr implements Callable<Boolean> {
 	protected MessageObject msgObj;
-	protected final Process process;
 	protected BufferedReader rdr;
 	protected StringBuilder strbld;
 	protected String type;
 	protected MsgCodes msgType;//for display of output
 	protected int iter = 0;
-	public myProcConsoleMsgMgr(final Process _process, Reader _in, String _type) {
+	public myProcConsoleMsgMgr(String _type) {
 		msgObj = MessageObject.buildMe();
-		process=_process;
-		rdr = new BufferedReader(_in); 
 		strbld = new StringBuilder();
 		type=_type;
 		msgType = (type.equals("Input")) ? MsgCodes.info3 : MsgCodes.error4;
 	}//ctor	
+	
+	/**
+	 * Set buffered reader for this ConsoleMsgManager
+	 * @param _in
+	 */
+	public void setReader(Reader _in) {
+		rdr = new BufferedReader(_in); 
+	}
+	
+	
 	/**
 	 * return string with process output type as prefix
 	 * @param rawStr
@@ -60,5 +67,5 @@ public abstract class myProcConsoleMsgMgr implements Callable<Boolean> {
 		}
 		return true;
 	}//call
-	
+
 }//messageMgr
