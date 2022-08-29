@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import base_Utils_Objects.io.MessageObject;
 import base_Utils_Objects.io.MsgCodes;
@@ -48,8 +47,8 @@ public class myProcessManager<T extends myProcConsoleMsgMgr> {
 		Process process = null;
 		try {
 			process = pb.start();			
-			 inMsgs.setReader(new InputStreamReader(process.getInputStream()));
-			 errMsgs.setReader(new InputStreamReader(process.getErrorStream()));
+			inMsgs.setReader(new InputStreamReader(process.getInputStream()));
+			errMsgs.setReader(new InputStreamReader(process.getErrorStream()));
 		
 			procMsgMgrs.add(inMsgs);
 			procMsgMgrs.add(errMsgs);			
