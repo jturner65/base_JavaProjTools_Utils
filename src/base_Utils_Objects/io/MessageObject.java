@@ -82,7 +82,7 @@ public class MessageObject {
 			outputMethod = (_logLevel >= 3 ? 2 : _logLevel);
 			fileIO = new FileIOManager(this, "Logger");	
 		}
-		_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), "messageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
+		_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), "MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
 	}//setOutputMethod
 	
 	public String getOutputMethod(int outputMethod) {		

@@ -85,11 +85,11 @@ public class FileIOManager{
 		    while (sc.hasNextLine()) {lines.add(sc.nextLine()); }
 		    //Scanner suppresses exceptions
 		    if (sc.ioException() != null) { throw sc.ioException(); }
-		    msg.dispMessage("fileIOManager:"+owner, "_loadFileIntoStringAra",dispYesStr+"\tLength : " +  lines.size(), MsgCodes.info3);
+		    msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra",dispYesStr+"\tLength : " +  lines.size(), MsgCodes.info3);
 		    res = lines.toArray(new String[0]);		    
 		} catch (Exception e) {	
 			e.printStackTrace();
-			msg.dispMessage("fileIOManager:"+owner, "_loadFileIntoStringAra","!!"+dispNoStr, MsgCodes.error3);
+			msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra","!!"+dispNoStr, MsgCodes.error3);
 			res= new String[0];
 		} 
 		finally {
@@ -126,12 +126,12 @@ public class FileIOManager{
 		    }
 		    //Scanner suppresses exceptions
 		    if (sc.ioException() != null) { throw sc.ioException(); }
-		    msg.dispMessage("fileIOManager:"+owner, "_loadFileIntoStringAra_MT",dispYesStr+"\tLength : " +  count + " distributed into "+lines.length+" arrays.", MsgCodes.info1);
+		    msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra_MT",dispYesStr+"\tLength : " +  count + " distributed into "+lines.length+" arrays.", MsgCodes.info1);
 		    for (int i=0;i<lines.length;++i) {res[i] = lines[i].toArray(new String[0]);	 }
 		    res[res.length-1]=hdrRes;
 		} catch (Exception e) {	
 			e.printStackTrace();
-			msg.dispMessage("fileIOManager:"+owner, "_loadFileIntoStringAra_MT","!!"+dispNoStr, MsgCodes.error2);
+			msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra_MT","!!"+dispNoStr, MsgCodes.error2);
 			res= new String[0][];
 		} 
 		finally {

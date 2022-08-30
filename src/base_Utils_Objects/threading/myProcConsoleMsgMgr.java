@@ -44,10 +44,10 @@ public abstract class myProcConsoleMsgMgr implements Callable<Boolean> {
 	protected abstract String getStreamType(String rawStr);
 	//access owning map manager's message display function if it exists, otherwise just print to console
 	private void  dispMessage(String str, MsgCodes useCode) {
-		if(msgObj != null) {
-			String typStr = getStreamType(str);			
+		String typStr = getStreamType(str);	
+		if(msgObj != null) {		
 			msgObj.dispMessage("myProcConsoleMsgMgr","call ("+typStr+" Stream Handler)", str, useCode);}
-		else {				System.out.println(str);	}
+		else {				System.out.println("myProcConsoleMsgMgr::call ("+typStr+" Stream Handler) : " + str);	}
 	}//msgObj.dispMessage
 	
 	public String getResults() {	return strbld.toString();	}
