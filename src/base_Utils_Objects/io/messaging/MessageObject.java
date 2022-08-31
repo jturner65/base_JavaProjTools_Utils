@@ -25,7 +25,7 @@ public class MessageObject {
 	//0 : print to console
 	//1 : save to log file - if logfilename is not set, will default to outputMethod==0
 	//2 : both
-	private static int outputMethod;
+	private static int outputMethod = 0;
 	//file name to use for current run
 	private static String fileName =null;
 	//manage file IO for log file saving
@@ -52,6 +52,7 @@ public class MessageObject {
 		if(!termCondSet) {		return buildMe(false);	} 
 		else {					return new MessageObject();}	//returns another instance
 	}
+	
 	/**
 	 * Factory to build the message objects. Note the consoleStrings is independent of instance
 	 * @param _hasGraphics
@@ -68,7 +69,11 @@ public class MessageObject {
 			//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				@SuppressWarnings("unused")
-				public void run() {	if(obj==null) {return;}obj.dispInfoMessage("MessageObject", "Shutdown Hook", "Execting msgObj.FinishLog() code to flush log buffer to files and close log files.");	obj.FinishLog();}
+				public void run() {	
+					if(obj==null) {return;}
+					obj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	
+					obj.FinishLog();
+				}					
 			});
 			termCondSet=true;
 		}
@@ -78,14 +83,19 @@ public class MessageObject {
 	//define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
 	public void setOutputMethod(String _fileName, int _logLevel) {
 		fileName = _fileName;
-		if((fileName == null) || (fileName.length() < 3) || (_logLevel<=0)) {outputMethod = 0;}
+		if((_logLevel<=0) || (fileName == null) || (fileName.length() < 3)) {outputMethod = 0;}
 		else {
-			File directory = new File(fileName);
-		    if (! directory.exists()){ directory.mkdir(); }
+			File fileNameFile = new File(fileName);
+			//make any directories that have not been built yet required to save this log file
+			File directory = fileNameFile.isDirectory() ? fileNameFile : fileNameFile.getParentFile();
+		    if (!directory.exists()){ 
+		    	boolean mkDirSuccess = directory.mkdirs();
+				_dispMessage_base_console("MessageObject","setOutputMethod","Making logging directory :"+directory.toString()+" to contain file `"+fileNameFile.getName() +"` : "+ (mkDirSuccess ? "Success" : "FAILED!!") , MsgCodes.info1,true);
+		    }
 			outputMethod = (_logLevel >= 3 ? 2 : _logLevel);
 			fileIO = new FileIOManager(this, "Logger");	
 		}
-		_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), "MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
+		_dispMessage_base_console("MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
 	}//setOutputMethod
 	
 	public String getOutputMethod(int outputMethod) {		
@@ -97,13 +107,13 @@ public class MessageObject {
 		}
 	}
 	
-	//finish any logging and write to file - this should be done when program closes
+	/**
+	 * finish any logging and write to file - this should be done when program closes
+	 */
 	public void FinishLog() {
 		if((fileName == null) || (fileIO == null) || (outputMethod == 0) || (logMsgQueue.size()==0)) {return;}
-		_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), "messageObject","FinishLog","Saving last " + logMsgQueue.size() + " queued messages to log file before exiting program.", MsgCodes.info1,true);
-		ArrayList<String> outList = new ArrayList<String>();
-		for(String key : logMsgQueue.keySet()) {	outList.add(logMsgQueue.get(key));}
-		fileIO.saveStrings(fileName, outList, true);		
+		_dispMessage_base_console("MessageObject","FinishLog","Saving last " + logMsgQueue.size() + " queued messages to log file before exiting program.", MsgCodes.info1,true);
+		_flushAndSaveLogMsgQueue();
 	}//FinishLog
 	/**
 	 * Return current wall time and time from execution start in string form
@@ -171,8 +181,6 @@ public class MessageObject {
 	 */
 	public void dispConsoleErrorMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.error1,true, 0);	}	
 	
-	
-	
 	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode){						_dispMessage_base(srcClass,srcMethod,msgText, useCode,true, outputMethod);}	
 	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	_dispMessage_base(srcClass,srcMethod,msgText, useCode,onlyConsole, outputMethod);	}	
 	//parse string on \n characters
@@ -211,11 +219,11 @@ public class MessageObject {
 
 	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, int outputMethod) {		
 		switch(outputMethod) {
-		case 0 :{_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);break;}	//just console
-		case 1 :{_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(logDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);break;}			//just log file
+		case 0 :{_dispMessage_base_console(srcClass,srcMethod,msgText, useCode,onlyConsole);break;}	//just console
+		case 1 :{_dispMessage_base_log(srcClass,srcMethod,msgText, useCode,onlyConsole);break;}			//just log file
 		case 2 :{	//both log and console
-			_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);
-			_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(logDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);
+			_dispMessage_base_console(srcClass,srcMethod,msgText, useCode,onlyConsole);
+			_dispMessage_base_log(srcClass,srcMethod,msgText, useCode,onlyConsole);
 			break;}		
 		}		
 	}//_dispMessage_base
@@ -227,7 +235,7 @@ public class MessageObject {
 					for(int j=0; j<_perLine; ++j){	
 						if((i+j >= _sAra.length)) {continue;}
 						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}			
 				break;}	
 			case 1 :{//just log file
@@ -236,7 +244,7 @@ public class MessageObject {
 					for(int j=0; j<_perLine; ++j){	
 						if((i+j >= _sAra.length)) {continue;}
 						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}			
 				break;}			//just log file
 			case 2 :{	//both log and console
@@ -245,19 +253,45 @@ public class MessageObject {
 					for(int j=0; j<_perLine; ++j){	
 						if((i+j >= _sAra.length)) {continue;}
 						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
-					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}
 			}
 		}//switch
 	}//dispMessageAra
-
+	private void  _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+		 _dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass, srcMethod, msgText, useCode, onlyConsole);	
+	}
 	
 	private void _dispMessage_base_console(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
 		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
 		//if((onlyConsole) || (pa == null)) {		System.out.println(msg);	} else {	outStr2Scr(msg, true);	}
 		printAndBuildConsoleStrs(msg, (onlyConsole || !hasGraphics));
 	}//dispMessage
+	
+	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+		_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(logDelim), srcClass,  srcMethod, msgText, useCode, onlyConsole);
+	}
+	//only save every 20 message lines
+	private void _dispMessage_base_log(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
+		synchronized(logMsgQueue){
+			logMsgQueue.put(timeStr, baseStr);
+			if(logMsgQueue.size()> 20){
+				_flushAndSaveLogMsgQueue();
+			}
+		}//sync
+	}//dispMessage
+	
+	/**
+	 * Save the current logMsgQueue to disk
+	 */
+	private synchronized void _flushAndSaveLogMsgQueue() {
+		ArrayList<String> outList = new ArrayList<String>();
+		for(String key : logMsgQueue.keySet()) {	outList.add(logMsgQueue.get(key));}
+		fileIO.saveStrings(fileName, outList, true);
+		logMsgQueue.clear();
+	}
 	
 	/**
 	 * print informational string data to console, and to screen
@@ -283,20 +317,6 @@ public class MessageObject {
 	 * @return
 	 */
 	public String[] getConsoleStringsAsArray() {		return consoleStrings.toArray(new String[0]);	}
-	
-	
-	//only save every 20 message lines
-	private void _dispMessage_base_log(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
-		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
-		synchronized(logMsgQueue){
-			logMsgQueue.put(timeStr, baseStr);
-			if(logMsgQueue.size()> 20){
-				ArrayList<String> outList = new ArrayList<String>();
-				for(String key : logMsgQueue.keySet()) {	outList.add(logMsgQueue.get(key));}
-				fileIO.saveStrings(fileName, outList, true);
-				logMsgQueue.clear();
-			}
-		}//sync
-	}//dispMessage
+
 	
 }//messageObject

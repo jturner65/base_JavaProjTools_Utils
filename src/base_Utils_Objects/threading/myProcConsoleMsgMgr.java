@@ -20,8 +20,8 @@ public abstract class myProcConsoleMsgMgr implements Callable<Boolean> {
 	protected String type;
 	protected MsgCodes msgType;//for display of output
 	protected int iter = 0;
-	public myProcConsoleMsgMgr(String _type) {
-		msgObj = MessageObject.buildMe();
+	public myProcConsoleMsgMgr(MessageObject _msgObj, String _type) {
+		msgObj = _msgObj;
 		strbld = new StringBuilder();
 		type=_type;
 		msgType = (type.equals("Input")) ? MsgCodes.info3 : MsgCodes.error4;
