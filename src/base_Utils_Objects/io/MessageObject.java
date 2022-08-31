@@ -57,6 +57,7 @@ public class MessageObject {
 	public static MessageObject buildMe(boolean _hasGraphics) {
 		MessageObject obj;
 		//ignore _pa==null if pa is already set
+		//can turn on graphics but cannot turn it off
 		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics,Instant.now().toEpochMilli());} 
 		else obj = new MessageObject(hasGraphics,Instant.now().toEpochMilli());
 		
@@ -76,7 +77,6 @@ public class MessageObject {
 		fileName = _fileName;
 		if((fileName == null) || (fileName.length() < 3) || (_logLevel<=0)) {outputMethod = 0;}
 		else {
-			fileName = _fileName;
 			File directory = new File(fileName);
 		    if (! directory.exists()){ directory.mkdir(); }
 			outputMethod = (_logLevel >= 3 ? 2 : _logLevel);
@@ -110,69 +110,68 @@ public class MessageObject {
 	public String getCurrWallTime() { return timeMgr.getCurrWallTime();}
 	public String getTimeStrFromProcStart() { return timeMgr.getTimeStrFromProcStart();}
 	//pass an array to display
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine) {dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  MsgCodes.info1, true);}
+	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine) {
+		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  MsgCodes.info1, true, outputMethod);
+	}
 	//pass an array to display
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode) {dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, true);}
+	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode) {
+		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, true, outputMethod);
+	}
 	//show array of strings, either just to console or to applet window
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole) {			
-		switch(outputMethod) {
-			case 0 :{//just console
-				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim) , _callingClass,_callingMethod,s, useCode,onlyConsole);
-				}			
-				break;}	
-			case 1 :{//just log file
-				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim) , _callingClass,_callingMethod,s, useCode,onlyConsole);
-				}			
-				break;}			//just log file
-			case 2 :{	//both log and console
-				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
-					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim) , _callingClass,_callingMethod,s, useCode,onlyConsole);
-					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim) , _callingClass,_callingMethod,s, useCode,onlyConsole);
-				}
-			}
-		}//switch
-	}//dispMessageAra
+	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole) {	
+		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, onlyConsole, outputMethod);
+	}
 	
 	//pass single-line messages - only 1 display of timestamp and class/method prefix
 	/**
 	 * default info message
-	 * @param srcClass
-	 * @param srcMethod
-	 * @param msgText
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
 	 */
-	public void dispInfoMessage(String srcClass, String srcMethod, String msgText){										_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.info1,true);	}	
+	public void dispInfoMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.info1,true, outputMethod);	}	
 	/**
 	 * default warning message
-	 * @param srcClass
-	 * @param srcMethod
-	 * @param msgText
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
 	 */
-	public void dispWarningMessage(String srcClass, String srcMethod, String msgText){										_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.warning1,true);	}	
+	public void dispWarningMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.warning1,true, outputMethod);	}	
 	/**
 	 * default error message
-	 * @param srcClass
-	 * @param srcMethod
-	 * @param msgText
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
 	 */
-	public void dispErrorMessage(String srcClass, String srcMethod, String msgText){										_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.error1,true);	}	
+	public void dispErrorMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.error1,true, outputMethod);	}	
 	
 	
-	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode){						_dispMessage_base(srcClass,srcMethod,msgText, useCode,true);}	
-	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	_dispMessage_base(srcClass,srcMethod,msgText, useCode,onlyConsole);	}	
+	/**
+	 * default info message to console regardless of log level specified
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
+	 */
+	public void dispConsoleInfoMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.info1,true, 0);	}	
+	/**
+	 * default warning message to console regardless of log level specified
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
+	 */
+	public void dispConsoleWarningMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.warning1,true, 0);	}	
+	/**
+	 * default error message to console regardless of log level specified
+	 * @param srcClass name of calling class
+	 * @param srcMethod name of calling method
+	 * @param msgText message text to print
+	 */
+	public void dispConsoleErrorMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass,srcMethod,msgText, MsgCodes.error1,true, 0);	}	
+	
+	
+	
+	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode){						_dispMessage_base(srcClass,srcMethod,msgText, useCode,true, outputMethod);}	
+	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	_dispMessage_base(srcClass,srcMethod,msgText, useCode,onlyConsole, outputMethod);	}	
 	//parse string on \n characters
 	public void dispMultiLineInfoMessage(String srcClass, String srcMethod, String msgTextWithNewLines){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(_sAra, srcClass,srcMethod,1, MsgCodes.info1,true);}	
 	public void dispMultiLineMessage(String srcClass, String srcMethod, String msgTextWithNewLines, MsgCodes useCode){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(_sAra, srcClass,srcMethod,1, useCode,true);}	
@@ -206,11 +205,10 @@ public class MessageObject {
 		}
 		return src;
 	}//_processMsgCode
-	
-	
-	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {		
+
+	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, int outputMethod) {		
 		switch(outputMethod) {
-		case 0 :{_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim) , srcClass,srcMethod,msgText, useCode,onlyConsole);break;}	//just console
+		case 0 :{_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);break;}	//just console
 		case 1 :{_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(logDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);break;}			//just log file
 		case 2 :{	//both log and console
 			_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass,srcMethod,msgText, useCode,onlyConsole);
@@ -218,6 +216,39 @@ public class MessageObject {
 			break;}		
 		}		
 	}//_dispMessage_base
+	private void _dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, int outputMethod) {			
+		switch(outputMethod) {
+			case 0 :{//just console
+				for(int i=0;i<_sAra.length; i+=_perLine){
+					String s = "";
+					for(int j=0; j<_perLine; ++j){	
+						if((i+j >= _sAra.length)) {continue;}
+						s+= _sAra[i+j]+ "\t";}
+					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+				}			
+				break;}	
+			case 1 :{//just log file
+				for(int i=0;i<_sAra.length; i+=_perLine){
+					String s = "";
+					for(int j=0; j<_perLine; ++j){	
+						if((i+j >= _sAra.length)) {continue;}
+						s+= _sAra[i+j]+ "\t";}
+					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+				}			
+				break;}			//just log file
+			case 2 :{	//both log and console
+				for(int i=0;i<_sAra.length; i+=_perLine){
+					String s = "";
+					for(int j=0; j<_perLine; ++j){	
+						if((i+j >= _sAra.length)) {continue;}
+						s+= _sAra[i+j]+ "\t";}
+					_dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(dispDelim), _callingClass,_callingMethod,s, useCode,onlyConsole);
+				}
+			}
+		}//switch
+	}//dispMessageAra
+
 	
 	private void _dispMessage_base_console(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
 		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
@@ -241,7 +272,7 @@ public class MessageObject {
 	}
 	
 	/**
-	 * Update consoleStrings decay timer - after specified # of calls, 
+	 * Pop the head of the consoleStrings deque 
 	 */
 	public String updateConsoleStrs(){	return consoleStrings.poll();}//updateConsoleStrs
 	/**

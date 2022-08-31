@@ -65,13 +65,25 @@ public class FileIOManager{
 		     pw = new PrintWriter(fw);
 		     for (int i=0;i<data.size();++i) { pw.println(data.get(i));}
 		     success = true;
-		} catch (IOException e) {	e.printStackTrace();success = false;}
+		} catch (IOException e) {	
+			e.printStackTrace();
+			msg.dispConsoleErrorMessage("FileIOManager ("+owner +")", "saveStrings", "Saving " +data.size() + " strings to " + fname + " failed");
+			success = false;
+		}
 		finally {			if (pw != null) {pw.close();}}
 		return success;
 	}//saveStrings
 	
 	
-	public String[] loadFileIntoStringAra(String fileName, String dispYesStr, String dispNoStr) {try {return _loadFileIntoStringAra(fileName, dispYesStr, dispNoStr);} catch (Exception e) {e.printStackTrace(); } return new String[0];}
+	public String[] loadFileIntoStringAra(String fileName, String dispYesStr, String dispNoStr) {
+		try {
+			return _loadFileIntoStringAra(fileName, dispYesStr, dispNoStr);
+		} catch (Exception e) {
+			e.printStackTrace(); 
+			msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra","!!"+dispNoStr, MsgCodes.error3);
+		} 
+		return new String[0];
+	}
 	//stream read the csv file and build the data objects
 	private String[] _loadFileIntoStringAra(String fileName, String dispYesStr, String dispNoStr) throws IOException {		
 		FileInputStream inputStream = null;
