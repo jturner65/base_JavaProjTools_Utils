@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.concurrent.Callable;
 
-import base_Utils_Objects.io.MessageObject;
-import base_Utils_Objects.io.MsgCodes;
+import base_Utils_Objects.io.messaging.MessageObject;
+import base_Utils_Objects.io.messaging.MsgCodes;
 
 /**
  * manage a message stream from a launched external process

@@ -3,6 +3,9 @@ package base_Utils_Objects.io;
 import java.io.*;
 import java.util.*;
 
+import base_Utils_Objects.io.messaging.MessageObject;
+import base_Utils_Objects.io.messaging.MsgCodes;
+
 /**
  * This class will manage file IO
  * @author john
