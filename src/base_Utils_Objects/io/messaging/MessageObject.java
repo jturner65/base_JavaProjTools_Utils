@@ -18,20 +18,31 @@ public class MessageObject {
 	private static Boolean supportsANSITerm = null;
 	private static myTimeMgr timeMgr = null;
 	
-	//delimiter for display or output to log
+	/**
+	 * delimiter for display or output to log
+	 */
 	private static final String dispDelim = " | ", logDelim = ", ", newLineDelim = "\\r?\\n";
 	
-	//int to encode what to do with output
-	//0 : print to console
-	//1 : save to log file - if logfilename is not set, will default to outputMethod==0
-	//2 : both
+	/** 
+	 * int to encode what to do with output 
+	 * 0 : print to console 
+	 * 1 : save to log file - if logfilename is not set, will default to outputMethod==0 
+	 * 2 : both 
+	 */
 	private static int outputMethod = 0;
-	//file name to use for current run
+	/**
+	 * File name to use for current run/process
+	 */
 	private static String fileName =null;
-	//manage file IO for log file saving
+	/**
+	 * Manage file IO for log file saving
+	 */
 	private static FileIOManager fileIO = null;
 	
-	//temporary string display data being printed to console - show on screen for a bit and then decay
+	/**
+	 * Temporary string display data being printed to console - show on screen for a bit and then decay
+	 * Different deque for every instance
+	 */
 	private ArrayDeque<String> consoleStrings;
 	
 	private static ConcurrentSkipListMap<String, String> logMsgQueue = new ConcurrentSkipListMap<String, String>();	
@@ -47,7 +58,10 @@ public class MessageObject {
 		consoleStrings = new ArrayDeque<String>();
 	}//in case we ever use any instance-specific data for this - copy ctor	
 	
-	//hasGraphics can also be set directly externally
+	/**
+	 * hasGraphics can also be set directly externally
+	 * @return
+	 */
 	public static MessageObject buildMe() { 
 		if(!termCondSet) {		return buildMe(false);	} 
 		else {					return new MessageObject();}	//returns another instance
@@ -80,10 +94,14 @@ public class MessageObject {
 		return obj;
 	}//buildMe
 	
-	//define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
-	public void setOutputMethod(String _fileName, int _logLevel) {
+	/**
+	 * define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
+	 * @param _fileName
+	 * @param _logLevel
+	 */
+	public synchronized void setOutputMethod(String _fileName, int _logLevel) {
 		fileName = _fileName;
-		if((_logLevel<=0) || (fileName == null) || (fileName.length() < 3)) {outputMethod = 0;}
+		if((_logLevel<=0) || (fileName == null) || (fileName.length() < 3)) {outputMethod = 0;fileIO = null;}
 		else {
 			File fileNameFile = new File(fileName);
 			//make any directories that have not been built yet required to save this log file
@@ -93,7 +111,7 @@ public class MessageObject {
 				_dispMessage_base_console("MessageObject","setOutputMethod","Making logging directory :"+directory.toString()+" to contain file `"+fileNameFile.getName() +"` : "+ (mkDirSuccess ? "Success" : "FAILED!!") , MsgCodes.info1,true);
 		    }
 			outputMethod = (_logLevel >= 3 ? 2 : _logLevel);
-			fileIO = new FileIOManager(this, "Logger");	
+			if (fileIO==null) {	fileIO = new FileIOManager(this, "Logger");}	
 		}
 		_dispMessage_base_console("MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
 	}//setOutputMethod
@@ -227,53 +245,53 @@ public class MessageObject {
 			break;}		
 		}		
 	}//_dispMessage_base
+	private String buildLine(String[] _sAra, int _perLine, int _row) {
+		String s = "";
+		for(int j=0; j<_perLine; ++j){	
+			if((_row+j >= _sAra.length)) {continue;}
+			s+= _sAra[_row+j]+ "\t";}
+		return s;
+	}	
 	private void _dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, int outputMethod) {			
 		switch(outputMethod) {
 			case 0 :{//just console
 				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
+					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}			
 				break;}	
 			case 1 :{//just log file
 				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
+					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}			
 				break;}			//just log file
 			case 2 :{	//both log and console
 				for(int i=0;i<_sAra.length; i+=_perLine){
-					String s = "";
-					for(int j=0; j<_perLine; ++j){	
-						if((i+j >= _sAra.length)) {continue;}
-						s+= _sAra[i+j]+ "\t";}
+					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
 					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}
 			}
 		}//switch
 	}//dispMessageAra
-	private void  _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
-		 _dispMessage_base_console(timeMgr.getWallTimeAndTimeFromStart(dispDelim), srcClass, srcMethod, msgText, useCode, onlyConsole);	
-	}
-	
-	private void _dispMessage_base_console(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+	private void _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+		String timeStr = timeMgr.getWallTimeAndTimeFromStart(dispDelim);
 		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
-		//if((onlyConsole) || (pa == null)) {		System.out.println(msg);	} else {	outStr2Scr(msg, true);	}
 		printAndBuildConsoleStrs(msg, (onlyConsole || !hasGraphics));
-	}//dispMessage
-	
-	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
-		_dispMessage_base_log(timeMgr.getWallTimeAndTimeFromStart(logDelim), srcClass,  srcMethod, msgText, useCode, onlyConsole);
 	}
-	//only save every 20 message lines
-	private void _dispMessage_base_log(String timeStr, String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
+	
+
+	/**
+	 * only save every 20 message lines
+	 * @param srcClass
+	 * @param srcMethod
+	 * @param msgText
+	 * @param useCode
+	 * @param onlyConsole
+	 */
+	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {
+		String timeStr = timeMgr.getWallTimeAndTimeFromStart(logDelim);
 		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
 		synchronized(logMsgQueue){
 			logMsgQueue.put(timeStr, baseStr);
@@ -281,7 +299,7 @@ public class MessageObject {
 				_flushAndSaveLogMsgQueue();
 			}
 		}//sync
-	}//dispMessage
+	}
 	
 	/**
 	 * Save the current logMsgQueue to disk
@@ -294,7 +312,7 @@ public class MessageObject {
 	}
 	
 	/**
-	 * print informational string data to console, and to screen
+	 * print informational string data to console, and to screen if appropriate and has graphics support
 	 * @param str
 	 * @param onlyConsole whether to print only to console or to add to consoleStrings to be displayed in graphical window as well
 	 */
@@ -306,7 +324,7 @@ public class MessageObject {
 				consoleStrings.add(res[i]);		//add console string output to screen display- decays over time
 			}
 		}
-	}
+	}//printAndBuildConsoleStrs
 	
 	/**
 	 * Pop the head of the consoleStrings deque 
