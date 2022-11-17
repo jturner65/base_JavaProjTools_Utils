@@ -1,4 +1,5 @@
 package base_Utils_Objects.priorityQueue.base;
+
 /**
  * Priority Queue class implementation 
  * @author john
@@ -38,7 +39,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * ctor for initial set of keys
 	 * @param _keys
 	 */
-	public myPriorityQueue( T[] _keys) {
+	public myPriorityQueue(T[] _keys) {
 		_numElems = 0; 
 		resizeHeap(_keys.length * 2);//make 2x as large as initial key set
 		System.arraycopy(_keys, _stIDX, heap, _stIDX, _keys.length);
@@ -93,8 +94,12 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 		if(isEmpty() || idx > _numElems) {return null;}
 		return heap[idx];
 	}
-	
-	//remove and return idx'th element from heap
+
+	/**
+	 * remove and return idx'th element from heap
+	 * @param idx
+	 * @return
+	 */
 	protected T removeElem(int idx) {
 		if(isEmpty()) {return null;}
 		T elem = heap[idx];
