@@ -140,16 +140,37 @@ public class MessageObject {
 	public String getCurrWallTimeAndTimeFromStart() {return timeMgr.getWallTimeAndTimeFromStart(dispDelim);}
 	public String getCurrWallTime() { return timeMgr.getCurrWallTime();}
 	public String getTimeStrFromProcStart() { return timeMgr.getTimeStrFromProcStart();}
-	//pass an array to display
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine) {
+	/**
+	 * pass an array to display
+	 * @param _callingClass
+	 * @param _callingMethod
+	 * @param _sAra
+	 * @param _perLine
+	 */
+	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine) {
 		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  MsgCodes.info1, true, outputMethod);
 	}
-	//pass an array to display
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode) {
+	/**
+	 * pass an array to display
+	 * @param _callingClass
+	 * @param _callingMethod
+	 * @param _sAra
+	 * @param _perLine
+	 * @param useCode
+	 */
+	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine, MsgCodes useCode) {
 		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, true, outputMethod);
 	}
-	//show array of strings, either just to console or to applet window
-	public void dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole) {	
+	/**
+	 * show array of strings, either just to console or to applet window
+	 * @param _callingClass
+	 * @param _callingMethod
+	 * @param _sAra
+	 * @param _perLine
+	 * @param useCode
+	 * @param onlyConsole
+	 */
+	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine, MsgCodes useCode, boolean onlyConsole) {	
 		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, onlyConsole, outputMethod);
 	}
 	
@@ -202,9 +223,9 @@ public class MessageObject {
 	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode){						_dispMessage_base(srcClass,srcMethod,msgText, useCode,true, outputMethod);}	
 	public void dispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	_dispMessage_base(srcClass,srcMethod,msgText, useCode,onlyConsole, outputMethod);	}	
 	//parse string on \n characters
-	public void dispMultiLineInfoMessage(String srcClass, String srcMethod, String msgTextWithNewLines){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(_sAra, srcClass,srcMethod,1, MsgCodes.info1,true);}	
-	public void dispMultiLineMessage(String srcClass, String srcMethod, String msgTextWithNewLines, MsgCodes useCode){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(_sAra, srcClass,srcMethod,1, useCode,true);}	
-	public void dispMultiLineMessage(String srcClass, String srcMethod, String msgTextWithNewLines, MsgCodes useCode, boolean onlyConsole) {String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(_sAra, srcClass,srcMethod,1, useCode,onlyConsole);}	
+	public void dispMultiLineInfoMessage(String srcClass, String srcMethod, String msgTextWithNewLines){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(srcClass,srcMethod,_sAra, 1, MsgCodes.info1,true);}	
+	public void dispMultiLineMessage(String srcClass, String srcMethod, String msgTextWithNewLines, MsgCodes useCode){String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(srcClass,srcMethod,_sAra, 1, useCode,true);}	
+	public void dispMultiLineMessage(String srcClass, String srcMethod, String msgTextWithNewLines, MsgCodes useCode, boolean onlyConsole) {String[] _sAra = msgTextWithNewLines.split(newLineDelim);dispMessageAra(srcClass,srcMethod,_sAra, 1, useCode,onlyConsole);}	
 	
 	
 	////////////////////////
@@ -259,7 +280,7 @@ public class MessageObject {
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
 				}			
-				break;}	
+				break;}			//just console
 			case 1 :{//just log file
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
@@ -271,16 +292,16 @@ public class MessageObject {
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
 					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
-				}
-			}
+				}			
+				break;}			//both log and console
 		}//switch
 	}//dispMessageAra
+	
 	private void _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
 		String timeStr = timeMgr.getWallTimeAndTimeFromStart(dispDelim);
 		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
 		printAndBuildConsoleStrs(msg, (onlyConsole || !hasGraphics));
-	}
-	
+	}	
 
 	/**
 	 * only save every 20 message lines

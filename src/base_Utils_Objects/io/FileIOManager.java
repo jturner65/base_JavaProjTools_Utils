@@ -15,9 +15,9 @@ public class FileIOManager{
 	//msg object interface
 	protected MessageObject msg;
 	//name of owning class of the instance of this object, for display
-	protected String owner;
+	protected final String owner;
 	
-	public FileIOManager(MessageObject _msg, String _owner) {owner=_owner; msg=_msg;}	
+	public FileIOManager(MessageObject _msg, String _owner) {msg=_msg;owner=_owner; }	
 	/**
 	 * write data to file
 	 * @param fname file name
@@ -77,7 +77,13 @@ public class FileIOManager{
 		return success;
 	}//saveStrings
 	
-	
+	/**
+	 * Load the passed filename into an array of strings, which is returned
+	 * @param fileName fully qualified name of the file
+	 * @param dispYesStr message to display if file loaded successfully
+	 * @param dispNoStr message to display if load fails
+	 * @return array of strings from the file
+	 */
 	public String[] loadFileIntoStringAra(String fileName, String dispYesStr, String dispNoStr) {
 		try {
 			return _loadFileIntoStringAra(fileName, dispYesStr, dispNoStr);
@@ -87,7 +93,14 @@ public class FileIOManager{
 		} 
 		return new String[0];
 	}
-	//stream read the csv file and build the data objects
+	/**
+	 * stream read the csv file and build the data objects
+	 * @param fileName
+	 * @param dispYesStr
+	 * @param dispNoStr
+	 * @return
+	 * @throws IOException
+	 */
 	private String[] _loadFileIntoStringAra(String fileName, String dispYesStr, String dispNoStr) throws IOException {		
 		FileInputStream inputStream = null;
 		Scanner sc = null;
@@ -100,7 +113,7 @@ public class FileIOManager{
 		    while (sc.hasNextLine()) {lines.add(sc.nextLine()); }
 		    //Scanner suppresses exceptions
 		    if (sc.ioException() != null) { throw sc.ioException(); }
-		    msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra",dispYesStr+"\tLength : " +  lines.size(), MsgCodes.info3);
+		    msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra",dispYesStr+"\tLength : " + lines.size(), MsgCodes.info3);
 		    res = lines.toArray(new String[0]);		    
 		} catch (Exception e) {	
 			e.printStackTrace();
@@ -114,26 +127,49 @@ public class FileIOManager{
 		return res;
 	}//loadFileContents	
 	
-	//load into multiple arrays for multi-threaded processing
+	/**
+	 * load into multiple arrays for multi-threaded processing
+	 * @param fileName
+	 * @param dispYesStr
+	 * @param dispNoStr
+	 * @param numHdrLines
+	 * @param numThds
+	 * @return
+	 */
 	public String[][] loadFileIntoStringAra_MT(String fileName, String dispYesStr, String dispNoStr, int numHdrLines, int numThds) {
 		try {return _loadFileIntoStringAra_MT(fileName, dispYesStr, dispNoStr, numHdrLines, numThds);} 
-		catch (Exception e) {e.printStackTrace(); } 
+		catch (Exception e) {
+			e.printStackTrace();
+			msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra","!!"+dispNoStr, MsgCodes.error3);
+		} 
 		return new String[0][];
 	}
-	//load files into multiple arrays for multi-threaded processing
+	/**
+	 * load files into multiple arrays for multi-threaded processing
+	 * @param fileName
+	 * @param dispYesStr
+	 * @param dispNoStr
+	 * @param numHdrLines
+	 * @param numThds
+	 * @return
+	 * @throws IOException
+	 */
 	private String[][] _loadFileIntoStringAra_MT(String fileName, String dispYesStr, String dispNoStr, int numHdrLines, int numThds) throws IOException {		
 		FileInputStream inputStream = null;
 		Scanner sc = null;
+		boolean saveHeader = (numHdrLines > 0);
 		@SuppressWarnings("unchecked")
 		List<String>[] lines = new ArrayList[numThds];
 		for (int i=0;i<numThds;++i) {lines[i]=new ArrayList<String>();	}
-		String[][] res = new String[numThds+1][];
+		//add extra spot for header(s) if present
+		
+		String[][] res = new String[numThds+(saveHeader ? 1 : 0)][];
 		String[] hdrRes = new String[numHdrLines];
 		int idx = 0, count = 0;
 		try {
 		    inputStream = new FileInputStream(fileName);
 		    sc = new Scanner(inputStream);
-		    for(int i=0;i<numHdrLines;++i) {    	hdrRes[i]=sc.nextLine();   }		    
+		    if (saveHeader) {for(int i=0;i<numHdrLines;++i) {    	hdrRes[i]=sc.nextLine();   }}
 		    while (sc.hasNextLine()) {
 		    	lines[idx].add(sc.nextLine()); 
 		    	idx = (idx + 1)%numThds;
@@ -141,7 +177,8 @@ public class FileIOManager{
 		    }
 		    //Scanner suppresses exceptions
 		    if (sc.ioException() != null) { throw sc.ioException(); }
-		    msg.dispMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra_MT",dispYesStr+"\tLength : " +  count + " distributed into "+lines.length+" arrays.", MsgCodes.info1);
+		    msg.dispMultiLineInfoMessage("FileIOManager ("+owner +")", "_loadFileIntoStringAra_MT",
+		    		dispYesStr+"\n\tLength : " + count + " lines distributed into "+numThds+" arrays" + (saveHeader ? "\n\twith "+numHdrLines+" header lines saved as last idx in array" : "") + ".");
 		    for (int i=0;i<lines.length;++i) {res[i] = lines[i].toArray(new String[0]);	 }
 		    res[res.length-1]=hdrRes;
 		} catch (Exception e) {	
