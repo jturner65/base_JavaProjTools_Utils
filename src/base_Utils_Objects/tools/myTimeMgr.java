@@ -63,7 +63,7 @@ public class myTimeMgr {
                 .appendLiteral(curTimeToken)
                 .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
                 .optionalStart()
-                .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+                .appendFraction(ChronoField.NANO_OF_SECOND, 7, 7, true)
                 .toFormatter(Locale.getDefault(Locale.Category.FORMAT)).withZone( ZoneId.systemDefault() );		
 	}
 	//////////////////////////

@@ -2,7 +2,7 @@ package base_Utils_Objects.tools;
 
 /**
  * Miscellaneous constants and useful functions 
- * @author 7strb
+ * @author John Turner
  *
  */
 public class myTools {

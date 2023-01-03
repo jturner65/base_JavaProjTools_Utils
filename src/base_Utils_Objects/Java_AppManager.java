@@ -7,7 +7,7 @@ import base_Utils_Objects.tools.myTimeMgr;
 
 /**
  * Build a java application which does not require UI functionality.  GUI_AppManager inherits from this class
- * @author 7strb
+ * @author John Turner
  *
  */
 

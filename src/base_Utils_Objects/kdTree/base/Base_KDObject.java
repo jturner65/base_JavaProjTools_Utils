@@ -4,7 +4,7 @@ import base_Utils_Objects.kdTree.KDTree;
 
 /**
  * This class defines an object held in the KDnode of a KDTree, as well as the comparison function to compare between two KDObjects
- * @author 7strb
+ * @author John Turner
  *
  */
 public abstract class Base_KDObject <T extends Base_KDObject<T>> implements Comparable<Base_KDObject<T>> {
