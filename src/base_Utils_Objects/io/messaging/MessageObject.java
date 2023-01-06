@@ -1,13 +1,12 @@
 package base_Utils_Objects.io.messaging;
 
 import java.io.File;
-import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import base_Utils_Objects.io.FileIOManager;
-import base_Utils_Objects.tools.myTimeMgr;
+import base_Utils_Objects.timer.TimerManager;
 
 /**
  * This class instances objects that are responsible for screen display, and potentially writing out to log files
@@ -16,7 +15,7 @@ import base_Utils_Objects.tools.myTimeMgr;
 public class MessageObject {
 	public static boolean hasGraphics;
 	private static Boolean supportsANSITerm = null;
-	private static myTimeMgr timeMgr = null;
+	private static TimerManager timerMgr = null;
 	
 	/**
 	 * delimiter for display or output to log
@@ -48,10 +47,10 @@ public class MessageObject {
 	private static ConcurrentSkipListMap<String, String> logMsgQueue = new ConcurrentSkipListMap<String, String>();	
 	private static boolean termCondSet = false;
 	
-	private MessageObject(boolean _hasGraphics, long _exeBuiltTime) {
+	private MessageObject(boolean _hasGraphics) {
 		hasGraphics=_hasGraphics; 
 		if(supportsANSITerm == null) {supportsANSITerm = (System.console() != null && System.getenv().get("TERM") != null);	}
-		if(timeMgr == null) {timeMgr = new myTimeMgr(_exeBuiltTime);}
+		if(timerMgr == null) {timerMgr = TimerManager.getInstance();}
 		consoleStrings = new ArrayDeque<String>();	
 	}	
 	private MessageObject() {
@@ -76,8 +75,8 @@ public class MessageObject {
 		MessageObject obj;
 		//ignore _pa==null if pa is already set
 		//can turn on graphics but cannot turn it off
-		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics,Instant.now().toEpochMilli());} 
-		else obj = new MessageObject(hasGraphics,Instant.now().toEpochMilli());
+		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics);} 
+		else obj = new MessageObject(hasGraphics);
 		
 		if(!termCondSet) {
 			//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
@@ -137,9 +136,10 @@ public class MessageObject {
 	 * Return current wall time and time from execution start in string form
 	 * @return string representation of wall time and time from start separated by a |
 	 */
-	public String getCurrWallTimeAndTimeFromStart() {return timeMgr.getWallTimeAndTimeFromStart(dispDelim);}
-	public String getCurrWallTime() { return timeMgr.getCurrWallTime();}
-	public String getTimeStrFromProcStart() { return timeMgr.getTimeStrFromProcStart();}
+	public String getCurrWallTimeAndTimeFromStart() {return timerMgr.getWallTimeAndTimeFromStart(dispDelim);}
+	public String getCurrWallTime() { return timerMgr.getCurrWallTime();}
+	public String getElapsedTimeStrForTimer(String timerName) { return timerMgr.getElapsedTimeStrForTimer(timerName);}
+	
 	/**
 	 * pass an array to display
 	 * @param _callingClass
@@ -298,7 +298,7 @@ public class MessageObject {
 	}//dispMessageAra
 	
 	private void _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
-		String timeStr = timeMgr.getWallTimeAndTimeFromStart(dispDelim);
+		String timeStr = timerMgr.getWallTimeAndTimeFromStart(dispDelim);
 		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
 		printAndBuildConsoleStrs(msg, (onlyConsole || !hasGraphics));
 	}	
@@ -312,7 +312,7 @@ public class MessageObject {
 	 * @param onlyConsole
 	 */
 	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {
-		String timeStr = timeMgr.getWallTimeAndTimeFromStart(logDelim);
+		String timeStr = timerMgr.getWallTimeAndTimeFromStart(logDelim);
 		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
 		synchronized(logMsgQueue){
 			logMsgQueue.put(timeStr, baseStr);
