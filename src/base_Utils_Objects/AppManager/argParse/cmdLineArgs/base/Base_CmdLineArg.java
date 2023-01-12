@@ -33,8 +33,8 @@ public abstract class Base_CmdLineArg {
 	/**
 	 * Set command line argument descriptive values
 	 * @param _delim
-	 * @param _cmdChar
-	 * @param _cmdString
+	 * @param _cmdChar use char only, do not include delimiter
+	 * @param _cmdString use string only, do not include delimiter
 	 * @param _destString
 	 * @param _helpString
 	 * @param _type 
@@ -50,8 +50,8 @@ public abstract class Base_CmdLineArg {
 
 	/**
 	 * Set command line argument descriptive values. Uses the default delimiter character
-	 * @param _cmdChar
-	 * @param _cmdString
+	 * @param _cmdChar use char only, do not include delimiter
+	 * @param _cmdString use string only, do not include delimiter
 	 * @param _destString
 	 * @param _helpString
 	 * @param _type 
@@ -74,7 +74,7 @@ public abstract class Base_CmdLineArg {
 	/**
 	 * @return the cmdString
 	 */
-	public String getCmdString() {return cmdString;}
+	public String getCmdString() {return ""+delimChar+""+""+delimChar+""+cmdString;}
 
 	/**
 	 * @return the destString
@@ -85,6 +85,5 @@ public abstract class Base_CmdLineArg {
 	 * @return the helpString
 	 */
 	public String getHelpString() {return helpString;}
-	
 	
 }//class Base_CmdLineArg

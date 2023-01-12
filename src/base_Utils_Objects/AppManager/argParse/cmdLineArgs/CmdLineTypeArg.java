@@ -1,18 +1,24 @@
-package base_Utils_Objects.AppManager.argParse.cmdLineArgs.base;
+package base_Utils_Objects.AppManager.argParse.cmdLineArgs;
 
 import java.util.ArrayList;
+import java.util.Collection;
+
+import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
+import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.CmdLineArgType;
 
 /**
  * Class provides base functionality to handle command line argument configuration, to be consumed by argparse4j
  * @author John Turner
  *
  */
-public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
+public class CmdLineTypeArg<T> extends Base_CmdLineArg{
 	/**
 	 * Potential choices of a value of type T
 	 */
 	protected ArrayList<T> choices;
-	
+	/**
+	 * Whether choices have been specified
+	 */
 	private boolean hasChoices;
 	
 	/**
@@ -20,7 +26,15 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	 */
 	protected T defaultVal;
 	
+	/**
+	 * Whether a default value exists
+	 */
 	private boolean hasDefaultVal;
+	
+	/**
+	 * Whether the underlying type of this arg is comparable
+	 */
+	protected boolean isComparable;
 	
 	
 	/**
@@ -31,7 +45,7 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	 * @param _helpString
 	 * @param _type 
 	 */
-	public Base_CmdLineTypeArg(char _cmdChar, String _cmdString, String _destString, String _helpString, CmdLineArgType _type) {
+	public CmdLineTypeArg(char _cmdChar, String _cmdString, String _destString, String _helpString, CmdLineArgType _type) {
 		super(_cmdChar, _cmdString, _destString, _helpString, _type);
 		initCmd();
 	}
@@ -45,7 +59,7 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	 * @param _helpString
 	 * @param _type 
 	 */	
-	public Base_CmdLineTypeArg(char _delim, char _cmdChar, String _cmdString, String _destString, String _helpString, CmdLineArgType _type) {
+	public CmdLineTypeArg(char _delim, char _cmdChar, String _cmdString, String _destString, String _helpString, CmdLineArgType _type) {
 		super(_delim, _cmdChar, _cmdString, _destString, _helpString, _type);
 		initCmd();
 	}
@@ -55,6 +69,7 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 		choices = new ArrayList<T>();
 		hasDefaultVal = false;
 		hasChoices = false;
+		isComparable = false;
 	}
 		
 	/**
@@ -79,8 +94,7 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	 * Set list of possible choice values for this command line argument
 	 * @param _choices
 	 */
-	@SuppressWarnings("unchecked")
-	public void setCmndLineChoices(T... _choices) {
+	public void setCmndLineChoices(Collection<T> _choices) {
 		choices.clear();
 		for(T val : _choices) {	choices.add(val);}
 		hasChoices = choices.size() > 0;
@@ -88,7 +102,6 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	
 	/**
 	 * Whether or not specific choices were provided for cmd line arg
-	 * @return
 	 */
 	public boolean hasChoices() {return hasChoices;}
 	
@@ -98,5 +111,9 @@ public abstract class Base_CmdLineTypeArg<T> extends Base_CmdLineArg{
 	 */
 	public ArrayList<T> getCmndLineChoices(){return choices;}
 	
+	/**
+	 * Whether or not the type of this arg is comparable
+	 */
+	public boolean isComparable() {return isComparable;}
 
 }//class Base_CmdLineTypeArg

@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Sealed: true
+Class-Path: ./argparse/argparse4j-0.8.1.jar
