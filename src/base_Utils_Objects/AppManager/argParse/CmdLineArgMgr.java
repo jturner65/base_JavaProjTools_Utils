@@ -1,14 +1,14 @@
-package base_Utils_Objects.AppManager.argParse;
+package base_Utils_Objects.appManager.argParse;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
 
-import base_Utils_Objects.AppManager.Java_AppManager;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.CmdLineCompTypeArg;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.CmdLineTypeArg;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.CmdLineArgType;
+import base_Utils_Objects.appManager.Java_AppManager;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.CmdLineCompTypeArg;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.CmdLineTypeArg;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.CmdLineArgType;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.Argument;

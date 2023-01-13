@@ -1,12 +1,12 @@
-package base_Utils_Objects.AppManager;
+package base_Utils_Objects.appManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
 
-import base_Utils_Objects.AppManager.argParse.CmdLineArgMgr;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.CmdLineArgType;
+import base_Utils_Objects.appManager.argParse.CmdLineArgMgr;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.CmdLineArgType;
 
 /**
  * Manage features of a console application

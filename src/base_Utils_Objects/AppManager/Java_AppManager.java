@@ -1,4 +1,4 @@
-package base_Utils_Objects.AppManager;
+package base_Utils_Objects.appManager;
 
 import java.io.File;
 import java.util.Map;

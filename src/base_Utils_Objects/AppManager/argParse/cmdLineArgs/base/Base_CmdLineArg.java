@@ -1,4 +1,4 @@
-package base_Utils_Objects.AppManager.argParse.cmdLineArgs.base;
+package base_Utils_Objects.appManager.argParse.cmdLineArgs.base;
 
 public abstract class Base_CmdLineArg {
 	/**

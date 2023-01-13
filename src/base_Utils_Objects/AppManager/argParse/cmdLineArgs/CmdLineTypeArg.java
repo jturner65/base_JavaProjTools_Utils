@@ -1,10 +1,10 @@
-package base_Utils_Objects.AppManager.argParse.cmdLineArgs;
+package base_Utils_Objects.appManager.argParse.cmdLineArgs;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.CmdLineArgType;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.CmdLineArgType;
 
 /**
  * Class provides base functionality to handle command line argument configuration, to be consumed by argparse4j

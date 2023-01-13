@@ -1,8 +1,8 @@
-package base_Utils_Objects.AppManager.argParse.cmdLineArgs;
+package base_Utils_Objects.appManager.argParse.cmdLineArgs;
 
 import java.util.ArrayList;
 
-import base_Utils_Objects.AppManager.argParse.cmdLineArgs.base.CmdLineArgType;
+import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.CmdLineArgType;
 
 public class CmdLineCompTypeArg<T extends Comparable<T>> extends CmdLineTypeArg<T> {
 	
