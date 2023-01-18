@@ -8,9 +8,13 @@ package base_Utils_Objects.priorityQueue.base;
  */
 public abstract class myPriorityQueue<T extends Comparable<T>>{
 	/**
-	 * initially have room for initSize items; start index of heap array - using 1 so that heap idxes line up to 2x / 2x + 1
+	 * initially have room for initSize items; 
 	 */
-	protected final int initSize = 10, _stIDX = 1;
+	protected int _initSize = 10;
+	/**
+	 * start index of heap array - using 1 so that heap idxes line up to 2x / 2x + 1
+	 */
+	protected final int _stIDX = 1;
 	/**
 	 * size of heap array holding elements in queue;
 	 */
@@ -27,31 +31,41 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * empty ctor
 	 */
 	public myPriorityQueue() {
-		initHeap();	
+		initHeap(_initSize);	
 	}//empty priority queue
 	
 	/**
-	 * ctor for initial size to be different than initSize
+	 * ctor for initial size to be different than base initSize
 	 * @param _initSize
 	 */
-	public myPriorityQueue(int _initSize) {_numElems = 0; resizeHeap(_initSize);	}
+	public myPriorityQueue(int initSize) {
+		initHeap(initSize);
+	}
 	/**
 	 * ctor for initial set of keys
 	 * @param _keys
 	 */
 	public myPriorityQueue(T[] _keys) {
-		_numElems = 0; 
-		resizeHeap(_keys.length * 2);//make 2x as large as initial key set
+		//make 2x as large as initial key set
+		initHeap(_keys.length * 2);
 		System.arraycopy(_keys, _stIDX, heap, _stIDX, _keys.length);
 		_numElems = _keys.length;		
 	}
-
+	
 	/**
-	 * call to reinitialize/clear heap
+	 * call to reinitialize/clear heap and set initial size to set value for _initSize
+	 */	
+	public final void initHeap() {
+		initHeap(_initSize);
+	}
+	/**
+	 * call to reinitialize/clear heap and set initial size to passed value
+	 * @param desired initial size
 	 */
-	public void initHeap() {
+	public final void initHeap(int initSize) {
 		_numElems = 0;
-		resizeHeap(initSize);	
+		_initSize = initSize;
+		resizeHeap(_initSize);	
 	}//
 	
 	/**
