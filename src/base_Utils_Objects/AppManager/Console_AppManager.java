@@ -2,7 +2,7 @@ package base_Utils_Objects.appManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.TreeMap;
+import java.util.HashMap;
 
 import base_Utils_Objects.appManager.argParse.CmdLineArgMgr;
 import base_Utils_Objects.appManager.argParse.cmdLineArgs.base.Base_CmdLineArg;
@@ -37,8 +37,8 @@ public abstract class Console_AppManager extends Java_AppManager {
 	 * @param _appMgr
 	 * @param passedArgs
 	 */
-	public static <T extends Console_AppManager> void invokeMain(T _appMgr, String[] _passedArgs) {
-		_appMgr.handleRuntimeArgs(_passedArgs);
+	protected static <T extends Console_AppManager> void invokeMain(T _appMgr, String[] _passedArgs) {
+		Java_AppManager.invokeMain(_appMgr, _passedArgs);
 	}
 	
 	/**
@@ -46,14 +46,14 @@ public abstract class Console_AppManager extends Java_AppManager {
 	 * @param passedArgs
 	 */	
 	@Override
-	protected final void handleRuntimeArgs(String[] passedArgs) {
+	protected final HashMap<String, Object> buildCmdLineArgs(String[] passedArgs) {
 		ArrayList<Base_CmdLineArg> cmdLineDesc = getCommandLineParserAttributes();
-		TreeMap<String, Object> rawArgsMap = new TreeMap<String, Object>();
+		HashMap<String, Object> rawArgsMap = new HashMap<String, Object>();
 		if((cmdLineDesc != null) && (cmdLineDesc.size()>0)){
 	        rawArgsMap = argParseMgr.getCmndLineArgs(passedArgs, cmdLineDesc);
 		}
-		//possibly override arguments from arg parser within application
-        argsMap = setRuntimeArgsVals(rawArgsMap);
+		
+        return rawArgsMap;
     }//handleRuntimeArgs
 	
 	/**

@@ -2,7 +2,7 @@ package base_Utils_Objects.appManager.argParse;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.TreeMap;
+import java.util.HashMap;
 
 import base_Utils_Objects.appManager.Java_AppManager;
 import base_Utils_Objects.appManager.argParse.cmdLineArgs.CmdLineCompTypeArg;
@@ -23,7 +23,7 @@ public class CmdLineArgMgr {
 		appMgr = _appMgr;
 	}
 	
-	public final TreeMap<String, Object> getCmndLineArgs(String[] passedArgs, ArrayList<Base_CmdLineArg> _cmdLineDesc){
+	public final HashMap<String, Object> getCmndLineArgs(String[] passedArgs, ArrayList<Base_CmdLineArg> _cmdLineDesc){
 		ArgumentParser argParser = buildArgParser(_cmdLineDesc);
 		Namespace args = null;
         try {
@@ -32,7 +32,7 @@ public class CmdLineArgMgr {
         	argParser.handleError(e);   
         	System.exit(1);
         }
-        return (TreeMap<String, Object>) args.getAttrs();
+        return (HashMap<String, Object>) args.getAttrs();
 	}//getCmndLineArgs
 	
 	/**
