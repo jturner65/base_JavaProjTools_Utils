@@ -58,9 +58,6 @@ public class MessageObject {
 	
 	private static final int maxLogMsgSize = 50;
 	
-	
-	
-	
 	private static boolean termCondSet = false;
 	
 	/**
@@ -113,43 +110,6 @@ public class MessageObject {
 		}
 		return msgObj;
 	}//getInstance()
-	
-	
-//	/**
-//	 * hasGraphics can also be set directly externally
-//	 * @return
-//	 */
-//	public static MessageObject buildMe() { 
-//		if(!termCondSet) {		return buildMe(false);	} 
-//		else {					return new MessageObject();}	//returns another instance
-//	}
-//	
-//	/**
-//	 * Factory to build the message objects. Note the consoleStrings is independent of instance
-//	 * @param _hasGraphics
-//	 * @return
-//	 */
-//	public static MessageObject buildMe(boolean _hasGraphics) {
-//		MessageObject obj;
-//		//ignore _pa==null if pa is already set
-//		//can turn on graphics but cannot turn it off
-//		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics);} 
-//		else obj = new MessageObject(hasGraphics);
-//		
-//		if(!termCondSet) {
-//			//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
-//			Runtime.getRuntime().addShutdownHook(new Thread() {
-//				@SuppressWarnings("unused")
-//				public void run() {	
-//					if(obj==null) {return;}
-//					obj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	
-//					obj.FinishLog();
-//				}					
-//			});
-//			termCondSet=true;
-//		}
-//		return obj;
-//	}//buildMe
 	
 	/**
 	 * define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
