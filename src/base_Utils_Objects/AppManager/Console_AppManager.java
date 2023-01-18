@@ -20,11 +20,10 @@ public abstract class Console_AppManager extends Java_AppManager {
 	protected final CmdLineArgMgr argParseMgr;
 	
 	public Console_AppManager() {
-		super();
+		super(false);
 		//argument parser and manager
 		argParseMgr = new CmdLineArgMgr(this);
 	}
-	
 	
 	/**
 	 * Build list of command line argument descriptions specific to this project

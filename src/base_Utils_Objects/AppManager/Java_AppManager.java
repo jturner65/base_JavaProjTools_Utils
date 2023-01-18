@@ -27,7 +27,12 @@ public abstract class Java_AppManager {
 	/**
 	 * Single, program-wide manager of display and log messages TODO
 	 */
-	//public final MessageObject msgObj;
+	public final MessageObject msgObj;
+	
+	/**
+	 * Whether this application has a graphical UI or is strictly a console application
+	 */
+	public final boolean hasGraphicalUI;
 	
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,11 +43,15 @@ public abstract class Java_AppManager {
 	 */
 	protected TreeMap<String, Object> argsMap;
 
-	public Java_AppManager() {
+	public Java_AppManager(boolean _hasGraphicalUI) {
+		hasGraphicalUI = _hasGraphicalUI;
 		//project arguments
 		argsMap = new TreeMap<String,Object>();
 		//single point manager for datetime tracking for application		
 		timeMgr = TimerManager.getInstance();
+		//build this application's message object and specify whether or not it should support graphical UI
+		msgObj = MessageObject.getInstance();
+		msgObj.setHasGraphics(hasGraphicalUI);
 	}
 		
 	/**

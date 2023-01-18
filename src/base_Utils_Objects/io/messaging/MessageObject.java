@@ -1,8 +1,9 @@
 package base_Utils_Objects.io.messaging;
 
 import java.io.File;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import base_Utils_Objects.io.FileIOManager;
@@ -13,9 +14,17 @@ import base_Utils_Objects.timer.TimerManager;
  * @author john
  */
 public class MessageObject {
-	public static boolean hasGraphics;
-	private static Boolean supportsANSITerm = null;
-	private static TimerManager timerMgr = null;
+	//Single instance 
+	private static MessageObject msgObj;
+	
+	/**
+	 * Whether or not the application owning this message object has graphical UI 
+	 */
+	private boolean hasGraphics;
+	
+	
+	private Boolean supportsANSITerm = null;
+	private TimerManager timerMgr = null;
 	
 	/**
 	 * delimiter for display or output to log
@@ -28,70 +37,119 @@ public class MessageObject {
 	 * 1 : save to log file - if logfilename is not set, will default to outputMethod==0 
 	 * 2 : both 
 	 */
-	private static int outputMethod = 0;
+	private int outputMethod = 0;
 	/**
-	 * File name to use for current run/process
+	 * File name to use for current program
 	 */
-	private static String fileName =null;
+	private String fileName = null;
 	/**
 	 * Manage file IO for log file saving
 	 */
-	private static FileIOManager fileIO = null;
+	private FileIOManager fileIO = null;
 	
 	/**
 	 * Temporary string display data being printed to console - show on screen for a bit and then decay
-	 * Different deque for every instance
 	 */
-	private ArrayDeque<String> consoleStrings;
+	private ConcurrentLinkedDeque<String> consoleStrings;
 	
-	private static ConcurrentSkipListMap<String, String> logMsgQueue = new ConcurrentSkipListMap<String, String>();	
+	private ConcurrentSkipListMap<Long, String> logMsgQueue = new ConcurrentSkipListMap<Long, String>();	
+	private int logMsgQueueSize = 0;
+	private Object logMsgModLock = new Object();
+	
+	private static final int maxLogMsgSize = 50;
+	
+	
+	
+	
 	private static boolean termCondSet = false;
 	
-	private MessageObject(boolean _hasGraphics) {
-		hasGraphics=_hasGraphics; 
-		if(supportsANSITerm == null) {supportsANSITerm = (System.console() != null && System.getenv().get("TERM") != null);	}
-		if(timerMgr == null) {timerMgr = TimerManager.getInstance();}
-		consoleStrings = new ArrayDeque<String>();	
-	}	
-	private MessageObject() {
-		consoleStrings = new ArrayDeque<String>();
-	}//in case we ever use any instance-specific data for this - copy ctor	
-	
 	/**
-	 * hasGraphics can also be set directly externally
-	 * @return
+	 * map to hold pre-computed console color strings for output high-lighting
 	 */
-	public static MessageObject buildMe() { 
-		if(!termCondSet) {		return buildMe(false);	} 
-		else {					return new MessageObject();}	//returns another instance
+	private static final HashMap<MsgCodes, String> msgClrPrefix = new HashMap<MsgCodes, String>();
+	static {
+		msgClrPrefix.put(MsgCodes.info1, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.WHITE);		//basic informational printout
+		msgClrPrefix.put(MsgCodes.info2, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.CYAN);
+		msgClrPrefix.put(MsgCodes.info3, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.YELLOW);		//informational output from som EXE
+		msgClrPrefix.put(MsgCodes.info4, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.GREEN);
+		msgClrPrefix.put(MsgCodes.info5, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.CYAN_BOLD);	//beginning or ending of processing chuck/function
+		msgClrPrefix.put(MsgCodes.warning1, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLACK_BOLD);
+		msgClrPrefix.put(MsgCodes.warning2, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_BOLD);	//warning info re: ui does not exist
+		msgClrPrefix.put(MsgCodes.warning3, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLACK_UNDERLINED);
+		msgClrPrefix.put(MsgCodes.warning4, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_UNDERLINED);	//info message about unexpected behavior
+		msgClrPrefix.put(MsgCodes.warning5, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_BRIGHT);
+		msgClrPrefix.put(MsgCodes.error1, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_UNDERLINED);	//try/catch error
+		msgClrPrefix.put(MsgCodes.error2, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_BOLD);		//code-based error
+		msgClrPrefix.put(MsgCodes.error3, ""+ConsoleCLR.RED_BACKGROUND_BRIGHT+ConsoleCLR.BLACK_BOLD);	//file load error
+		msgClrPrefix.put(MsgCodes.error4, ""+ConsoleCLR.WHITE_BACKGROUND_BRIGHT+ConsoleCLR.RED_BRIGHT);	//error message thrown by som executable
+		msgClrPrefix.put(MsgCodes.error5, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_BOLD_BRIGHT);
 	}
 	
+	private MessageObject() {
+		if(supportsANSITerm == null) {supportsANSITerm = (System.console() != null && System.getenv().get("TERM") != null);	}
+		if(timerMgr == null) {timerMgr = TimerManager.getInstance();}
+		consoleStrings = new ConcurrentLinkedDeque<String>();	
+	}	
+	
 	/**
-	 * Factory to build the message objects. Note the consoleStrings is independent of instance
-	 * @param _hasGraphics
+	 * Singleton Factory
 	 * @return
 	 */
-	public static MessageObject buildMe(boolean _hasGraphics) {
-		MessageObject obj;
-		//ignore _pa==null if pa is already set
-		//can turn on graphics but cannot turn it off
-		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics);} 
-		else obj = new MessageObject(hasGraphics);
-		
-		if(!termCondSet) {
-			//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
-			Runtime.getRuntime().addShutdownHook(new Thread() {
-				@SuppressWarnings("unused")
-				public void run() {	
-					if(obj==null) {return;}
-					obj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	
-					obj.FinishLog();
-				}					
-			});
-			termCondSet=true;
+	public static MessageObject getInstance() {
+		if (msgObj == null) {
+			msgObj = new MessageObject();
+			if(!termCondSet) {
+				//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					@SuppressWarnings("unused")
+					public void run() {	
+						if(msgObj==null) {return;}
+						msgObj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	
+						msgObj.FinishLog();
+					}					
+				});
+				termCondSet=true;
+			}			
 		}
-		return obj;
-	}//buildMe
+		return msgObj;
+	}//getInstance()
+	
+	
+//	/**
+//	 * hasGraphics can also be set directly externally
+//	 * @return
+//	 */
+//	public static MessageObject buildMe() { 
+//		if(!termCondSet) {		return buildMe(false);	} 
+//		else {					return new MessageObject();}	//returns another instance
+//	}
+//	
+//	/**
+//	 * Factory to build the message objects. Note the consoleStrings is independent of instance
+//	 * @param _hasGraphics
+//	 * @return
+//	 */
+//	public static MessageObject buildMe(boolean _hasGraphics) {
+//		MessageObject obj;
+//		//ignore _pa==null if pa is already set
+//		//can turn on graphics but cannot turn it off
+//		if(!hasGraphics) {	obj = new MessageObject(_hasGraphics);} 
+//		else obj = new MessageObject(hasGraphics);
+//		
+//		if(!termCondSet) {
+//			//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
+//			Runtime.getRuntime().addShutdownHook(new Thread() {
+//				@SuppressWarnings("unused")
+//				public void run() {	
+//					if(obj==null) {return;}
+//					obj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	
+//					obj.FinishLog();
+//				}					
+//			});
+//			termCondSet=true;
+//		}
+//		return obj;
+//	}//buildMe
 	
 	/**
 	 * define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
@@ -128,9 +186,19 @@ public class MessageObject {
 	 * finish any logging and write to file - this should be done when program closes
 	 */
 	public void FinishLog() {
-		if((fileName == null) || (fileIO == null) || (outputMethod == 0) || (logMsgQueue.size()==0)) {return;}
-		_dispMessage_base_console("MessageObject","FinishLog","Saving last " + logMsgQueue.size() + " queued messages to log file before exiting program.", MsgCodes.info1,true);
-		_flushAndSaveLogMsgQueue();
+		if((outputMethod == 0) || (logMsgQueueSize==0)) { return;}
+		if(fileName == null){
+			_dispMessage_base_console("MessageObject","FinishLog","Unknown/unspecified file name so unable to save log of " + logMsgQueueSize + " queued messages.", MsgCodes.warning1,true);
+			return;
+		}
+		if(fileIO == null){
+			_dispMessage_base_console("MessageObject","FinishLog","Unavailable/null fileIO object so unable to save log of " + logMsgQueueSize + " queued messages.", MsgCodes.warning1,true);
+			return;
+		}
+		_dispMessage_base_console("MessageObject","FinishLog","Saving last " + logMsgQueueSize + " queued messages to log file before exiting program.", MsgCodes.info1,true);
+		synchronized(logMsgModLock){
+			_flushAndSaveLogMsgQueue();
+		}
 	}//FinishLog
 	/**
 	 * Return current wall time and time from execution start in string form
@@ -230,39 +298,27 @@ public class MessageObject {
 	
 	////////////////////////
 	// private methods
-	private String buildClrStr(ConsoleCLR bk, ConsoleCLR clr, String str) {return bk.toString() + clr.toString() + str + ConsoleCLR.RESET.toString();	}
+	/**
+	 * Augment message with color highlighting based on message type, if supported
+	 * @param src
+	 * @param useCode
+	 * @return
+	 */
 	private String _processMsgCode(String src, MsgCodes useCode) {
 		if (!supportsANSITerm) {return src;}
-		switch(useCode) {//add background + letter color for messages
-			//info messages
-			case info1 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.WHITE, src);}		//basic informational printout
-			case info2 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.CYAN, src);}
-			case info3 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.YELLOW, src);}		//informational output from som EXE
-			case info4 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.GREEN, src);}
-			case info5 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.CYAN_BOLD, src);}	//beginning or ending of processing chuck/function
-			//warning messages                                                 , 
-			case warning1 : {	return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND, ConsoleCLR.BLACK_BOLD, src);}
-			case warning2 : {	return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND, ConsoleCLR.BLUE_BOLD, src);}	//warning info re: ui does not exist
-			case warning3 : {	return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND, ConsoleCLR.BLACK_UNDERLINED, src);}
-			case warning4 : {	return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND, ConsoleCLR.BLUE_UNDERLINED, src);}	//info message about unexpected behavior
-			case warning5 : {	return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND, ConsoleCLR.BLUE_BRIGHT, src);}
-			//error messages                                                   , 
-			case error1 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.RED_UNDERLINED, src);}//try/catch error
-			case error2 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.RED_BOLD, src);}		//code-based error
-			case error3 : {		return  buildClrStr(ConsoleCLR.RED_BACKGROUND_BRIGHT, ConsoleCLR.BLACK_BOLD, src);}	//file load error
-			case error4 : {		return  buildClrStr(ConsoleCLR.WHITE_BACKGROUND_BRIGHT, ConsoleCLR.RED_BRIGHT, src);}	//error message thrown by som executable
-			case error5 : {		return  buildClrStr(ConsoleCLR.BLACK_BACKGROUND, ConsoleCLR.RED_BOLD_BRIGHT, src);}
-		}
+		//find appropriate color code for message
+		String clrStr = msgClrPrefix.get(useCode);
+		if (clrStr != null) {		return clrStr + src + ConsoleCLR.RESET.toString();}
 		return src;
 	}//_processMsgCode
 
 	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, int outputMethod) {		
 		switch(outputMethod) {
 		case 0 :{_dispMessage_base_console(srcClass,srcMethod,msgText, useCode,onlyConsole);break;}	//just console
-		case 1 :{_dispMessage_base_log(srcClass,srcMethod,msgText, useCode,onlyConsole);break;}			//just log file
+		case 1 :{_dispMessage_base_log(srcClass,srcMethod,msgText, useCode);break;}			//just log file
 		case 2 :{	//both log and console
 			_dispMessage_base_console(srcClass,srcMethod,msgText, useCode,onlyConsole);
-			_dispMessage_base_log(srcClass,srcMethod,msgText, useCode,onlyConsole);
+			_dispMessage_base_log(srcClass,srcMethod,msgText, useCode);
 			break;}		
 		}		
 	}//_dispMessage_base
@@ -284,14 +340,14 @@ public class MessageObject {
 			case 1 :{//just log file
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
-					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode);
 				}			
 				break;}			//just log file
 			case 2 :{	//both log and console
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass,_callingMethod,s, useCode,onlyConsole);
-					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode,onlyConsole);
+					_dispMessage_base_log(_callingClass,_callingMethod,s, useCode);
 				}			
 				break;}			//both log and console
 		}//switch
@@ -309,27 +365,29 @@ public class MessageObject {
 	 * @param srcMethod
 	 * @param msgText
 	 * @param useCode
-	 * @param onlyConsole
 	 */
-	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {
+	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode) {
+		long timeKey = timerMgr.getMillisFromProgStart();
 		String timeStr = timerMgr.getWallTimeAndTimeFromStart(logDelim);
 		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
-		synchronized(logMsgQueue){
-			logMsgQueue.put(timeStr, baseStr);
-			if(logMsgQueue.size()> 20){
+		synchronized(logMsgModLock){
+			++logMsgQueueSize;
+			logMsgQueue.put(timeKey, baseStr);		
+			if(logMsgQueueSize> maxLogMsgSize){
 				_flushAndSaveLogMsgQueue();
 			}
-		}//sync
+		}
 	}
 	
 	/**
 	 * Save the current logMsgQueue to disk
 	 */
-	private synchronized void _flushAndSaveLogMsgQueue() {
+	private void _flushAndSaveLogMsgQueue() {
 		ArrayList<String> outList = new ArrayList<String>();
-		for(String key : logMsgQueue.keySet()) {	outList.add(logMsgQueue.get(key));}
+		for(Long key : logMsgQueue.keySet()) {	outList.add(logMsgQueue.get(key));}
 		fileIO.saveStrings(fileName, outList, true);
 		logMsgQueue.clear();
+		logMsgQueueSize = 0;
 	}
 	
 	/**
@@ -356,6 +414,8 @@ public class MessageObject {
 	 * @return
 	 */
 	public String[] getConsoleStringsAsArray() {		return consoleStrings.toArray(new String[0]);	}
+	
+	public void setHasGraphics(boolean _hasGraphics) {hasGraphics = _hasGraphics;}
 
 	
 }//messageObject
