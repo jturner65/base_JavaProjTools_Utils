@@ -31,7 +31,14 @@ public class myProcessManager<T extends myProcConsoleMsgMgr> {
 		procMsgMgrs = new ArrayList<myProcConsoleMsgMgr>(); 
 	}
 	
-	
+	/**
+	 * Launch a process
+	 * @param execStrAra
+	 * @param wkDirStr
+	 * @param inMsgs
+	 * @param errMsgs
+	 * @return
+	 */
 	public boolean launch(String[] execStrAra, String wkDirStr, T inMsgs, T errMsgs) {
 		//monitor in multiple threads, either msgs or errors
 		procMsgMgrsFtrs.clear();

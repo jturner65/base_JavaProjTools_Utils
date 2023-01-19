@@ -98,7 +98,6 @@ public class MessageObject {
 			if(!termCondSet) {
 				//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
 				Runtime.getRuntime().addShutdownHook(new Thread() {
-					@SuppressWarnings("unused")
 					public void run() {	
 						if(msgObj==null) {return;}
 						msgObj.dispConsoleInfoMessage("MessageObject", "Shutdown Hook", "Executing FinishLog() code to flush log buffer to specified log file.");	

@@ -33,8 +33,8 @@ public abstract class myThreadRunner {
 	protected List<Callable<Boolean>> ExMappers = new ArrayList<Callable<Boolean>>();
 
 	
-	public myThreadRunner(MessageObject _msgObj, ExecutorService _th_exec, boolean _canMT, int _numThds, int _numWorkUnits) {
-		msgObj = _msgObj;
+	public myThreadRunner(ExecutorService _th_exec, boolean _canMT, int _numThds, int _numWorkUnits) {
+		msgObj = MessageObject.getInstance();
 		th_exec = _th_exec;
 		canMultiThread = _canMT;
 		numUsableThreads = _numThds;
