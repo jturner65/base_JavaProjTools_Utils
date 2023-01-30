@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import base_Utils_Objects.io.messaging.MessageObject;
+import base_Utils_Objects.io.messaging.MsgCodes;
 import base_Utils_Objects.timer.TimerManager;
 
 /**
@@ -51,8 +52,22 @@ public abstract class Java_AppManager {
 		//build this application's message object and specify whether or not it should support graphical UI
 		msgObj = MessageObject.getInstance();
 		msgObj.setHasGraphics(hasGraphicalUI);
+		MsgCodes minConsole = getMinConsoleMsgCodes();
+		if (minConsole != null) {msgObj.setMinConsoleOutputLevel(minConsole);}
+		MsgCodes minLog = getMinLogMsgCodes(); 
+		if (minLog != null) {msgObj.setMinLogOutputLevel(minLog);}
 	}//ctor
-
+	
+	/**
+	 * Set minimum level of message object console messages to display for this application. If null then all messages displayed
+	 * @return
+	 */
+	protected abstract MsgCodes getMinConsoleMsgCodes(); 
+	/**
+	 * Set minimum level of message object log messages to save to log for this application. If null then all messages saved to log.
+	 * @return
+	 */
+	protected abstract MsgCodes getMinLogMsgCodes(); 
 		
 	/**
 	 * Returns milliseconds that have passed since application began+

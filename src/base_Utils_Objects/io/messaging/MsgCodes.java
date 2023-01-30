@@ -8,9 +8,10 @@ import java.util.*;
  *
  */
 public enum MsgCodes{
-	info1(0),info2(1),info3(2), info4(3), info5(4),
-	warning1(5),warning2(6),warning3(7),warning4(8),warning5(9),
-	error1(10),error2(11),error3(12),error4(13),error5(14);	
+	debug1(0),debug2(1),debug3(2), debug4(3), debug5(4),
+	info1(5),info2(6),info3(7), info4(8), info5(9),
+	warning1(10),warning2(11),warning3(12),warning4(13),warning5(14),	
+	error1(15),error2(16),error3(17),error4(18),error5(19);	
 	private int value; 
 	
 	private static Map<Integer, MsgCodes> map = new HashMap<Integer, MsgCodes>(); 
