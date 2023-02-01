@@ -18,15 +18,25 @@ import base_Utils_Objects.io.messaging.MessageObject;
  *
  */
 public abstract class myThreadRunner {
-	//msg object to handle console/log IO
+	/**
+	 * msg object to handle console/log IO
+	 */
 	protected final MessageObject msgObj;
-	//whether or not this calculation can be executed in multi-thread
+	/**
+	 * whether or not this calculation can be executed in multi-thread
+	 */
 	protected final boolean canMultiThread;
-	//the # of usable threads available for MT exec
+	/**
+	 * the # of usable threads available for MT exec
+	 */
 	protected final int numUsableThreads;
-	//ref to thread executor
+	/**
+	 * ref to thread executor
+	 */
 	protected final ExecutorService th_exec;	
-	//# of work units to perform - elements in list, possibly, to iterate through across multiple threads
+	/**
+	 * # of work units to perform - elements in list, possibly, to iterate through across multiple threads
+	 */
 	protected int numWorkUnits;
 	
 	protected List<Future<Boolean>> ExMapperFtrs = new ArrayList<Future<Boolean>>();
