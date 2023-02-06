@@ -31,6 +31,12 @@ public abstract class Base_BoolFlags {
 		numFlags =_numFlags;
 		initFlags();		
 	}//ctor
+	
+	public Base_BoolFlags(Base_BoolFlags _otr) {
+		numFlags = _otr.numFlags;
+		initFlags();
+		for(int i=0;i<flags.length;++i) {flags[i]=_otr.flags[i];}
+	}//copy ctor
 
 	/**
 	 * initialize flag structure
