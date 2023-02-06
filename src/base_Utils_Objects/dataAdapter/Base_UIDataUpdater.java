@@ -3,6 +3,8 @@ package base_Utils_Objects.dataAdapter;
 import java.util.HashMap;
 import java.util.Map;
 
+import base_Utils_Objects.tools.flags.Base_BoolFlags;
+
 public abstract class Base_UIDataUpdater {	
 	/**
 	 * map to hold UI-driven int values, using the UI object idx's as keys
@@ -54,6 +56,12 @@ public abstract class Base_UIDataUpdater {
 	public final boolean getFlag(int idx) {return boolValues.get(idx);}
 	public final int getIntValue(int idx) {return intValues.get(idx);  }
 	public final float getFloatValue(int idx) {return floatValues.get(idx);  }
+	
+	/**
+	 * Shortcut to retrieve debug value.
+	 * @return
+	 */
+	public final boolean getIsDebug() {return boolValues.get(Base_BoolFlags.debugIDX);}
 	
 	/**
 	 * Setters

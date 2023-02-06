@@ -70,13 +70,23 @@ public abstract class Base_BoolFlags {
 	public final boolean getFlag(int idx){int bitLoc = 1<<(idx%32);return (flags[idx/32] & bitLoc) == bitLoc;}	
 	
 	/**
+	 * Return flag array entry as integer (x'th 32 flag values).  Returns first entry in flags int array if idx is too big.
+	 * @param idx index in flags integer array
+	 * @return
+	 */
+	public final int getFlagsAsInt(int idx) {
+		if(idx > flags.length) {return flags[0];}
+		return flags[idx];
+	}
+	
+	/**
 	 * Check if all passed flags are true
 	 * @param idxs
 	 * @return
 	 */
 	public final boolean getAllFlagsAreTrue(int [] idxs){
 		int bitLoc; 
-		for(int idx =0;idx<idxs.length;++idx){
+		for(int idx : idxs){
 			bitLoc = 1<<(idx%32);
 			if ((flags[idx/32] & bitLoc) != bitLoc){return false;}
 		} 
@@ -90,7 +100,7 @@ public abstract class Base_BoolFlags {
 	 */
 	public final boolean getAnyFlagsAreTrue(int [] idxs){
 		int bitLoc; 
-		for(int idx =0;idx<idxs.length;++idx){
+		for(int idx : idxs){
 			bitLoc = 1<<(idx%32);
 			if ((flags[idx/32] & bitLoc) == bitLoc){return true;}
 		} 
@@ -113,7 +123,7 @@ public abstract class Base_BoolFlags {
 	 * @param val
 	 */
 	public void setAllFlagsToTrue(int[] idxs) { 
-		for(int idx =0;idx<idxs.length;++idx) {
+		for(int idx : idxs){
 			int flIDX = idx / 32, mask = 1 << (idx % 32);
 			flags[flIDX] = flags[flIDX] | mask;
 		}
@@ -125,7 +135,7 @@ public abstract class Base_BoolFlags {
 	 * @param val
 	 */
 	public void setAllFlagsToFalse(int[] idxs) { 
-		for(int idx =0;idx<idxs.length;++idx) {
+		for(int idx : idxs){
 			int flIDX = idx / 32, mask = 1 << (idx % 32);
 			flags[flIDX] = flags[flIDX] & ~mask;
 		}
@@ -147,21 +157,30 @@ public abstract class Base_BoolFlags {
 	 * @param val value to set
 	 */
 	public final void setFlag(int idx, boolean val) {
+		boolean oldVal = getFlag(idx);
 		forceVisFlag(idx, val);
 		//Handle debug mode
 		if (idx == debugIDX) {
 			handleSettingDebug(val);
 			return;
 		}
-		handleFlagSet_Indiv(idx, val);
+		handleFlagSet_Indiv(idx, val, oldVal);
 	}//setFlag
 	
 	/**
 	 * Custom handling for each individual flag being set/cleared
 	 * @param idx flag idx to set
-	 * @param val value being set
+	 * @param val value being set to
+	 * @param oldval value being changed from
 	 */
-	protected abstract void handleFlagSet_Indiv(int idx, boolean val);
+	protected abstract void handleFlagSet_Indiv(int idx, boolean val, boolean oldval);
+	
+	/**
+	 * This function syncs flag state and flag handling dependent on state.
+	 */
+	public final void refreshAllFlags() {
+		for(int i = 0; i<numFlags; ++i){setFlag(i,getFlag(i));}
+	}
 	
 	/**
 	 * Get every flag state and put in a treemap, with key in map being idx in flag state
