@@ -37,6 +37,12 @@ public abstract class Base_BoolFlags {
 		initFlags();
 		for(int i=0;i<flags.length;++i) {flags[i]=_otr.flags[i];}
 	}//copy ctor
+	
+	/**
+	 * Return the number of predefined flags.  All extending flags should start at this value
+	 * @return
+	 */
+	public static int getNumBaseFlags() {return _numBaseFlags;}
 
 	/**
 	 * initialize flag structure
