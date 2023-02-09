@@ -19,8 +19,11 @@ public abstract class Base_BoolFlags {
 	public static final int
 		debugIDX 						= 0;			//first idx is always for debug
 	
-	// Number of flags defined for all flag structures
-	protected static final int _numBaseFlags = 1;
+	/**
+	 * Number of flags defined in base class, available for all inheriting structures. 
+	 * Subsequent flags need to increment from this value
+	 */
+	public static final int _numBaseFlags = 1;
 	
 	/**
 	 * Number of flags this structure tracks
