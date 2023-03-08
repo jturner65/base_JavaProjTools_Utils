@@ -166,6 +166,15 @@ public abstract class Base_BoolFlags {
 		flags[flIDX] = (val ?  flags[flIDX] | mask : flags[flIDX] & ~mask);
 	}	
 	
+	
+	/**
+	 * Toggle the button represented by passed idx
+	 * @param idx
+	 */
+	public final void toggleFlag(int idx) {
+		setFlag(idx, !getFlag(idx));
+	}
+	
 	/**
 	 * set flag value @ idx
 	 * @param idx idx to set
