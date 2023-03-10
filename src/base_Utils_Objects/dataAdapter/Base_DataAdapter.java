@@ -58,12 +58,12 @@ public abstract class Base_DataAdapter {
 	/**
 	 * Getters
 	 */
-	public final boolean getFlag(int idx) {return boolValues.get(idx);}
+	public final boolean getBoolValue(int idx) {return boolValues.get(idx);}
 	public final int getIntValue(int idx) {return intValues.get(idx);  }
 	public final float getFloatValue(int idx) {return floatValues.get(idx);  }
 	
 	/**
-	 * Shortcut to retrieve debug value.
+	 * Shortcut to retrieve debug state.
 	 * @return
 	 */
 	public final boolean getIsDebug() {return boolValues.get(Base_BoolFlags.debugIDX);}
@@ -74,6 +74,25 @@ public abstract class Base_DataAdapter {
 	public final void setIntValue(Integer idx, Integer value){	intValues.put(idx,value);  }
 	public final void setFloatValue(Integer idx, Float value){	floatValues.put(idx,value);}
 	public final void setBoolValue(Integer idx, Boolean value){	boolValues.put(idx,value);}
+	
+	/**
+	 * Shortcut to set debug state.
+	 */
+	public final void setIsDebug(Boolean value) {boolValues.put(Base_BoolFlags.debugIDX,value);}
+	
+	/**
+	 * Shortcut to conditionally set debug state.
+	 */
+	public final boolean checkAndSetIsDebug(Boolean value) {
+		return checkAndSetBoolValue(Base_BoolFlags.debugIDX,value);
+	}
+	/**
+	 * Initialize the first num boolean values to false
+	 * @param num how many boolean flags should be initialized to false
+	 */
+	public final void initAllBoolsToFalse(int num) {
+		for(int idx = 0;idx<num;++idx) {setBoolValue(idx, false);}
+	}
 	
 	/**
 	 * Check thatMap vs thisMap to determine if they are different

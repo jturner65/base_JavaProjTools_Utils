@@ -2,6 +2,8 @@ package base_Utils_Objects.tools.flags;
 
 import java.util.TreeMap;
 
+import base_Utils_Objects.dataAdapter.Base_DataAdapter;
+
 /**
  * This class will manage a boolean flag state machine consisting of bit strings
  * @author John Turner
@@ -76,6 +78,15 @@ public abstract class Base_BoolFlags {
 	 * @param val
 	 */
 	protected abstract void handleSettingDebug(boolean val);
+	
+	/**
+	 * This will update all flags with values from passed data adapter
+	 * ADAPTER MUST USE SAME IDXS AS THIS FLAG MANAGER! 
+	 * @param dataUpdate
+	 */
+	public final void updateAllFlagsFromAdapter(Base_DataAdapter dataUpdate) {
+		for(int i = 0; i<numFlags; ++i){setFlag(i, dataUpdate.getBoolValue(i));}
+	}//updateAllFlagsFromAdapter
 	
 	/**
 	 * get flag value at passed idx

@@ -12,9 +12,10 @@ public class SimExecPrivStateFlags extends Base_BoolFlags {
 	 * IDXs of flags - 0 is always debug
 	 */
 	public static final int
-		conductExpIDX	= 1,		//conduct an experiment
-		condSweepExpIDX	= 2,		//conduct a set of experiments where values within the simulation world will change each iteration
-		drawVisIDX		= 3;		//draw visualization - if false should ignore all render interface stuff
+		initializedIDX 	= 1,		//owning sim executive has been initialized 
+		conductExpIDX	= 2,		//conduct an experiment
+		condSweepExpIDX	= 3,		//conduct a set of experiments where values within the simulation world will change each iteration
+		drawVisIDX		= 4;		//draw visualization - if false should ignore all render interface stuff
 	
 	private static final int numExecFlags = 4;
 	
@@ -33,6 +34,20 @@ public class SimExecPrivStateFlags extends Base_BoolFlags {
 	protected void handleSettingDebug(boolean val) {
 		owner.handlePrivFlagsDebugMode(val);
 	}
+	
+	
+	
+	/**
+	 * Get whether or not the owning exec has been initialized
+	 * @return
+	 */
+	public final boolean getIsInitialized() {return getFlag(initializedIDX);}
+
+	/**
+	 * Set whether or not the owning exec has been initialized
+	 * @param val
+	 */
+	public final void setIsInitialized(boolean val) {setFlag(initializedIDX, val);}	
 	
 	/**
 	 * Get whether or not the owning exec will conduct an experiment
@@ -79,6 +94,8 @@ public class SimExecPrivStateFlags extends Base_BoolFlags {
 		if(val == oldVal) {return;}
 		// update owning simuator
 		switch(idx){
+			case initializedIDX 		: {//if true then the owning simulator exec has been initialized
+				break;}
 			case conductExpIDX			: {//if true then conducting an experiment.  reset simulation to beginning with current settings and then run until # of minutes have passed	
 				break;}			
 			case condSweepExpIDX		: {

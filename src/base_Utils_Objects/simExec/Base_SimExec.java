@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 
 import base_Utils_Objects.io.messaging.MessageObject;
 import base_Utils_Objects.io.messaging.MsgCodes;
-import base_Utils_Objects.sim.Base_SimDataUpdater;
+import base_Utils_Objects.sim.Base_SimDataAdapter;
 import base_Utils_Objects.sim.Base_Simulator;
 import base_Utils_Objects.timer.TimerManager;
 
@@ -52,13 +52,21 @@ public abstract class Base_SimExec {
 	/**
 	 * current simulation time in milliseconds from simStartTime - will be scaled by calling window to manage sim speed; set at start of every simMe call
 	 */
-	protected float nowTime;
+	protected double nowTime;
+	/**
+	 * Now time from last sim step
+	 */
+	protected double lastTime;
 	
 	/**
-	 * Data updater to keep UI/configuration data in synch between interface and individual sims
+	 * Data updater to keep UI/configuration data in synch between interface and individual sims. Follows sim data format!
 	 */
-	protected Base_SimDataUpdater masterDataUpdate;
+	protected Base_SimDataAdapter masterDataUpdate;
 	
+	/**
+	 * scaling time to speed up simulation == amount to multiply modAmtMillis by
+	 */
+	protected float frameTimeScale = 1000.0f;	
 	
 	/**
 	 * Create a simulation executive that will manage one or more simulations
@@ -74,6 +82,21 @@ public abstract class Base_SimExec {
 		execFlags = new SimExecPrivStateFlags(this);
 		masterDataUpdate = buildSimDataUpdater();
 	}
+	
+	/**
+	 * Initialize all sim exec values one time. Call from concrete class constructor
+	 */
+	protected final void initSimExec() {		
+		initSimExec_Indiv();
+		execFlags.setIsInitialized(true);
+	}
+	
+	/**
+	 * Implementation-specific initialization
+	 */
+	protected abstract void initSimExec_Indiv();
+	
+	
 	/**
 	 * Create the simulations this sim exec will manage
 	 */
@@ -98,7 +121,7 @@ public abstract class Base_SimExec {
 	 * Build appropriate simulation updater for simulation types that this sim exec manages
 	 * @return
 	 */
-	public abstract Base_SimDataUpdater buildSimDataUpdater();
+	public abstract Base_SimDataAdapter buildSimDataUpdater();
 	
 	/**
 	 * Update current sim with changes from UI/interactive input, if any
@@ -113,17 +136,22 @@ public abstract class Base_SimExec {
 	 * 
 	 * @param _simData 
 	 */
-	public final void updateExecFromSimData(Base_SimDataUpdater _simDataUpdate) {
+	public final void updateExecFromSimData(Base_SimDataAdapter _simDataUpdate) {
 		masterDataUpdate.setAllVals(_simDataUpdate);
-		updateSimDataUpdaterFromSim_Indiv();
+		updateOwnerWithSimVals();
 	}
 
 	/**
 	 * Update any appropriate owning UI or interface components owning this simulation executive with values
 	 * from # masterDataUpdate.
 	 */
-	protected abstract void updateSimDataUpdaterFromSim_Indiv();
+	protected abstract void updateOwnerWithSimVals();
 	
+	/**
+	 * Specify current sim to use and reinitialize sim world
+	 * @param _simToUseIDX
+	 * @param _showMsg
+	 */
 	public final void setSimAndInit(int _simToUseIDX, boolean _showMsg) {
 		currSim = sims[_simToUseIDX];
 		initSimWorld(_showMsg);
@@ -162,6 +190,7 @@ public abstract class Base_SimExec {
 		
 		//reset Now to be 0
 		nowTime = 0;	
+		lastTime = 0;
 		resetSimExec_Indiv(showMsg);
 	}//resetSimExec
 	
@@ -203,11 +232,46 @@ public abstract class Base_SimExec {
 	}
 	
 	/**
-	 * advance current sim time by modAmtMillis * multiplier (for speed of simulation increase or decrease relative to realtime)
+	 * Advance current sim time by modAmtMillis * frameTimeScale (for speed of simulation increase or decrease relative to realtime)
 	 * @param modAmtMillis is milliseconds elapsed since last frame
 	 * @return whether sim is complete or not
 	 */
-	public abstract boolean stepSimulation(float modAmtMillis);
+	public final boolean stepSimulation(float modAmtMillis) {
+		//Record last time and set nowTime
+		float scaledMillisSinceLastFrame = modAmtMillis * frameTimeScale;		
+		lastTime = nowTime;
+		nowTime += scaledMillisSinceLastFrame;
+		//sim implementation advancement
+		return stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);
+	}//stepSimulation	
+	
+	/**
+	 * Advance current sim using nowTime as the time to simulate up to
+	 * @param modAmtMillis is milliseconds elapsed since last frame
+	 * @param scaledMillisSinceLastFrame is milliseconds since last frame scaled to speed up simulation
+	 * @return whether sim is complete or not
+	 */
+	protected abstract boolean stepSimulation_Indiv(float modAmtMillis, float scaledMillisSinceLastFrame);
+	
+	
+	///////////////////////////
+	// accessors
+	
+	/**
+	 * Initialize the master data adapter to useful initial values
+	 * @param idx
+	 * @param val
+	 */
+	public final void initMasterDataAdapter(int idx, boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetBoolValue(idx, val);
+	}
+	
+	/**
+	 * Get number of simulation flags defined for the sims managed by this sim exec
+	 * @return
+	 */
+	public abstract int getNumSimFlags();
 	
 	/**
 	 * Get current sim's specified flag's value
@@ -217,23 +281,68 @@ public abstract class Base_SimExec {
 	public final boolean getSimFlag(int idx) {return currSim.getSimFlag(idx);}
 	
 	/**
-	 * 
+	 * Set current simulation to be drawing visualizations
+	 * TODO move to UI sim exec?
 	 * @param val
 	 */
-	public final void setSimDrawVis(boolean val) {currSim.setSimDrawVis(val);}
+	public final void setSimDrawVis(boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetSimDrawVis(val);
+		currSim.setSimDrawVis(val);
+	}
+	
 	/**
-	 * 
+	 * Set current simulation to be in debug mode
 	 * @param val
 	 */
-	public final void setSimDebug(boolean val) {currSim.setSimDebug(val);}
+	public final void setSimDebug(boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetIsDebug(val);
+		currSim.setSimDebug(val);
+	}
 	
 	/**
 	 * Set current sim's specified flag to passed value
 	 * @param idx
 	 * @param val
 	 */
-	public final void setSimFlag(int idx, boolean val) {currSim.setSimFlag(idx, val);}
+	public final void setSimFlag(int idx, boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetBoolValue(idx, val);
+		currSim.setSimFlag(idx, val);
+	}
 	
+	/**
+	 * Set passed flag idx for all managed sims
+	 * @param idx
+	 * @param val
+	 */
+	public final void setAllSimsFlag(int idx, boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetBoolValue(idx, val);
+		for(Base_Simulator sim : sims) {sim.setSimFlag(idx, val);}
+		
+	}
+	
+	/**
+	 * Set all managed sims to be drawing visualizations
+	 * @param val
+	 */
+	public final void setAllSimsDrawVis(boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetSimDrawVis(val);
+		for(Base_Simulator sim : sims) {sim.setSimDrawVis(val);}
+	}
+	
+	/**
+	 * Set all managed sims to be in debug mode
+	 * @param val
+	 */
+	public final void setAllSimsDebug(boolean val) {
+		@SuppressWarnings("unused")
+		boolean hasChanged = masterDataUpdate.checkAndSetIsDebug(val);
+		for(Base_Simulator sim : sims) {sim.setSimDebug(val);}
+	}
 	
 	/**
 	 * Get this sim executive's passed flag idx
@@ -246,10 +355,10 @@ public abstract class Base_SimExec {
 	 * Get whether or not the owning exec will draw visualizations
 	 * @return
 	 */
-	public final boolean getDrawVisualizations() {return execFlags.getDrawVis();}
+	public final boolean getDoDrawViz() {return execFlags.getDrawVis();}
 	
 	/**
-	 * Get whether we are in debug mode or not
+	 * Get whether we are in debug mode or not for sim exec
 	 * @param val
 	 * @return
 	 */
@@ -266,14 +375,13 @@ public abstract class Base_SimExec {
 	 * Set whether or not the owning exec will draw visualizations
 	 * @param val
 	 */
-	public final void setDrawVisualizations(boolean val) {execFlags.setDrawVis(val);}
+	public final void setDoDrawViz(boolean val) {execFlags.setDrawVis(val);}
 	
 	/**
-	 * Set whether we are in debug mode or not
+	 * Set whether we are in debug mode or not for sim exec
 	 * @param val
 	 */
-	public final void setExecDebug(boolean val) {execFlags.setIsDebug(val);}
-	
+	public final void setExecDebug(boolean val) {execFlags.setIsDebug(val);}	
 	
 	/**
 	 * Application-specific Debug mode functionality (application-specific). Called only from privflags structure
@@ -292,14 +400,29 @@ public abstract class Base_SimExec {
 	 */
 	protected abstract void handlePrivFlagsDebugMode_Indiv(boolean val);	
 	
-	
-	public final float getNowTime() {return nowTime;}
+	/**
+	 * Get the current simulation time in milliseconds from simStartTime
+	 * @return
+	 */
+	public final double getNowTime() {return nowTime;}
 	
 	/**
 	 * Retrieve MessageObject for logging and message display
 	 * @return
 	 */
 	public final MessageObject getMsgObj() {return msgObj;}
+	
+	/**
+	 * Set the scaling amount to speed up simulation
+	 * @param _ts
+	 */
+	public final void setTimeScale(float _ts) {		frameTimeScale = _ts;	}
+	
+	/**
+	 * Retrieve the scaling amount to speed up simulation
+	 * @return
+	 */
+	public final float getTimeScale() {		return frameTimeScale;}	
 	
 	/** 
 	 * Returns working directory  TODO get this some other way

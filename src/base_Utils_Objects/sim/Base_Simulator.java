@@ -13,7 +13,7 @@ public abstract class Base_Simulator {
 	 */
 	protected final Base_SimExec exec;
 	/**
-	 * Name of this simuation world
+	 * Name of this simulation world
 	 */
 	protected final String name;
 	/**
@@ -23,18 +23,18 @@ public abstract class Base_Simulator {
 	
 	/**
 	 * Boolean flags that govern simulator behavior
-	 */
-	
+	 */	
 	public SimPrivStateFlags simFlags;
 	
 	/**
 	 * Data updater to keep UI/configuration data in synch
 	 */
-	protected Base_SimDataUpdater dataUpdate;
+	protected Base_SimDataAdapter dataUpdate;
 	
 	/**
 	 * 
 	 * @param _exec
+	 * @param _name
 	 */
 	public Base_Simulator(Base_SimExec _exec, String _name) {
 		exec = _exec;
@@ -48,8 +48,10 @@ public abstract class Base_Simulator {
 	 * Set this simulation's data update values to match those passed
 	 * @param _dataUpdate
 	 */
-	public final void setSimDataUpdate(Base_SimDataUpdater _dataUpdate) {
+	public final void setSimDataUpdate(Base_SimDataAdapter _dataUpdate) {
 		dataUpdate.setAllVals(_dataUpdate);
+		//update all sim flags
+		simFlags.updateAllFlagsFromAdapter(dataUpdate);
 		useDataUpdateVals_Indiv();
 	}
 
@@ -62,7 +64,7 @@ public abstract class Base_Simulator {
 	 * Initialize this simulation environment. Should be called by concrete child class constructor
 	 */
 	protected final void initSim() {
-		simFlags = new SimPrivStateFlags(this, getNumSimFlags());
+		simFlags = new SimPrivStateFlags(this, exec.getNumSimFlags());
 		
 		initSim_Indiv();
 	}
@@ -70,12 +72,6 @@ public abstract class Base_Simulator {
 	 * Sim-specific initialization
 	 */
 	protected abstract void initSim_Indiv();
-	
-	/**
-	 * Return the number of sim flags defined for this simulator
-	 * @return
-	 */
-	protected abstract int getNumSimFlags();
 	
 	/**
 	 * Get sim flag value for passed idx
@@ -141,11 +137,5 @@ public abstract class Base_Simulator {
 	 */
 	protected abstract void handlePrivFlags_Indiv(int idx, boolean val, boolean oldVal);
 	
-	
-	/**
-	 * Evolve a simulation visualization
-	 * @param deltaT
-	 */
-	public abstract void simStepVisualization(long deltaT);
-	
+
 }//class Base_Simulator
