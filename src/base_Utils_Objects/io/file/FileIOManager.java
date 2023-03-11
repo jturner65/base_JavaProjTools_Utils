@@ -12,9 +12,13 @@ import base_Utils_Objects.io.messaging.MsgCodes;
  *
  */
 public class FileIOManager{
-	//msg object interface
+	/**
+	 * msg object interface
+	 */
 	protected MessageObject msg;
-	//name of owning class of the instance of this object, for display
+	/**
+	 * name of owning class of the instance of this object, for display
+	 */
 	protected final String owner;
 	
 	public FileIOManager(MessageObject _msg, String _owner) {msg=_msg;owner=_owner; }	

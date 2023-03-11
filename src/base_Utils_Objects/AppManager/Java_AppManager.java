@@ -1,7 +1,11 @@
 package base_Utils_Objects.appManager;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import base_Utils_Objects.io.messaging.MessageObject;
 import base_Utils_Objects.io.messaging.MsgCodes;
@@ -29,6 +33,14 @@ public abstract class Java_AppManager {
 	 */
 	public final MessageObject msgObj;
 	
+	
+	
+	/**
+	 * physical display width and height this project is running on
+	 */
+	protected final int _displayWidth, _displayHeight;
+	
+	
 	/**
 	 * Whether this application has a graphical UI or is strictly a console application
 	 */
@@ -44,6 +56,18 @@ public abstract class Java_AppManager {
 	protected HashMap<String, Object> argsMap;
 	
 	public Java_AppManager(boolean _hasGraphicalUI) {
+		var ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		//get primary monitor size				
+		if(!ge.isHeadlessInstance()) {
+			GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+			_displayWidth = gd.getDisplayMode().getWidth();
+			_displayHeight = gd.getDisplayMode().getHeight();
+		} else {
+			//Currently do not support headless execution. TODO
+			_displayWidth = 0;
+			_displayHeight = 0;
+		}
+		//Whether the implementation is Console_AppManager or GUI_AppManager
 		hasGraphicalUI = _hasGraphicalUI;
 		//project arguments
 		argsMap = new HashMap<String,Object>();
@@ -52,11 +76,24 @@ public abstract class Java_AppManager {
 		//build this application's message object and specify whether or not it should support graphical UI
 		msgObj = MessageObject.getInstance();
 		msgObj.setHasGraphics(hasGraphicalUI);
+		viewMachineData();
 		MsgCodes minConsole = getMinConsoleMsgCodes();
 		if (minConsole != null) {msgObj.setMinConsoleOutputLevel(minConsole);}
 		MsgCodes minLog = getMinLogMsgCodes(); 
 		if (minLog != null) {msgObj.setMinLogOutputLevel(minLog);}
 	}//ctor
+
+	/**
+	 * Invoke the application main function - this is called from instancing Console_AppManager class
+	 * This will set the argsMap Hashmap of runtime arguments
+	 * @param <T>
+	 * @param _appMgr
+	 * @param passedArgs
+	 */
+	protected static <T extends Java_AppManager> void invokeMain(T _appMgr, String[] _passedArgs) {
+		_appMgr.setArgsMap(_passedArgs);
+	}
+	
 	
 	/**
 	 * Set minimum level of message object console messages to display for this application. If null then all messages displayed
@@ -119,16 +156,79 @@ public abstract class Java_AppManager {
 		//programmatic overrides to console args - specified in instancing AppManager
 		argsMap = setRuntimeArgsVals(tmpArgsMap);
 	}
+	///////////////////////////////////////////////////
+	// Math utilities
+
+	
+	
+	///////////////////////////////////////////////////
+	// Misc utilities
 	
 	/**
-	 * Invoke the application main function - this is called from instancing Console_AppManager class
-	 * This will set the argsMap Hashmap of runtime arguments
-	 * @param <T>
-	 * @param _appMgr
-	 * @param passedArgs
+	 * display the current memory layout
 	 */
-	protected static <T extends Java_AppManager> void invokeMain(T _appMgr, String[] _passedArgs) {
-		_appMgr.setArgsMap(_passedArgs);
-	}
+	public final void viewMachineData() {
+		Runtime runtime = Runtime.getRuntime();  
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-Host Machine Data----------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----System-----------------------------------------------------------");
+		TreeMap<String, TreeMap<String,String>> keyMap = new TreeMap<String, TreeMap<String,String>>();
+		keyMap.put("user", new TreeMap<String,String>());
+		keyMap.put("java", new TreeMap<String,String>());
+		keyMap.put("sun", new TreeMap<String,String>());
+		keyMap.put("misc", new TreeMap<String,String>());
+		for (var propertyKeyName : System.getProperties().keySet()){
+			String propName = propertyKeyName.toString();
+			boolean found = false;
+			for(var keyVals : keyMap.entrySet()) {
+				String fullKey = keyVals.getKey();
+				if(propName.startsWith(fullKey)) {keyVals.getValue().put(propName.split(fullKey+".")[1],propName);found=true;break;}
+			}
+			if(!found && !(propName.contains("line.separator"))) {keyMap.get("misc").put(propName,propName);}
+        }
+		for(var keyVals : keyMap.entrySet()) {
+			var vals = keyVals.getValue();
+			if(vals.size() > 0) {
+				String typeKey = keyVals.getKey();
+				msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-"+typeKey+"-----------------------------------------------------------------");
+				for(var propKeyVals : vals.entrySet()) {
+					msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\t"+typeKey+"."+propKeyVals.getKey()+": "+System.getProperty(propKeyVals.getValue()));
+				}
+				msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"");
+			}
+		}
+		
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tNumber of Available Processors: "+runtime.availableProcessors());
+		
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Display----------------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tWidth:"+_displayWidth+" | Height:"+_displayHeight);
+		
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-Java VM Runtime Data-------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Java Version-----------------------------------------------------");
+		var vers = Runtime.version();
+        StringBuilder sb = new StringBuilder(vers.version().stream().map(Object::toString).collect(Collectors.joining(".")));
+        sb.append("|");
+        vers.pre().ifPresent(v -> sb.append("Pre-Release: ").append(v).append("|"));
+
+        if (vers.build().isPresent()) {
+            sb.append("Build: ").append(vers.build().get());
+            if (vers.optional().isPresent()) {sb.append(":").append(vers.optional().get());}
+        } else {
+            if (vers.optional().isPresent()) {
+                sb.append(vers.pre().isPresent() ? ":" : "Info:").append(vers.optional().get());
+            }
+        }
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tVersion: "+sb.toString());		
+
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Memory Layout----------------------------------------------------");  
+		long maxMem = runtime.maxMemory(), allocMem = runtime.totalMemory(), freeMem = runtime.freeMemory();
+		float freeMemKB = freeMem/1024.0f, allocMemKB = allocMem / 1024.0f, maxMemKB = maxMem/1024.0f, usedMemKB = (allocMemKB - freeMemKB);
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tMax mem Available: \t\t" + String.format("%.3f",maxMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tCurrent Available Free mem: \t" + String.format("%.3f",freeMemKB/1024.0f) +" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tTotal Allocated mem: \t\t" + String.format("%.3f",allocMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tUsed mem: \t\t\t" + String.format("%.3f",usedMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tTotal free mem: \t\t" +  String.format("%.3f",(maxMemKB - allocMemKB) / 1024.0f)+" MB"); 
 	
+	}//checkMemorySetup
+	
+
 }//class Java_AppManager
