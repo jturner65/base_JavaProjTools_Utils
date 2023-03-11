@@ -228,7 +228,7 @@ public abstract class Base_SimExec {
 	 * @param stTime
 	 */
 	public final void showTimeMsgNow(String _simName, String _callingMethod, String _function, String _timerName) {
-		msgObj.dispMessage(_simName, _callingMethod,_function+" Time Now : "+getNamedTimerEllapsed(_timerName), MsgCodes.info2);
+		msgObj.dispMessage(_simName, _callingMethod,_function+" Time Elapsed: "+getNamedTimerEllapsed(_timerName), MsgCodes.info2);
 	}
 	
 	/**
@@ -242,7 +242,9 @@ public abstract class Base_SimExec {
 		lastTime = nowTime;
 		nowTime += scaledMillisSinceLastFrame;
 		//sim implementation advancement
-		return stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);
+		boolean isDone = stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);		
+		
+		return isDone;
 	}//stepSimulation	
 	
 	/**
