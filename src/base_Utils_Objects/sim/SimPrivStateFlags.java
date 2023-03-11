@@ -4,8 +4,8 @@ import base_Utils_Objects.tools.flags.Base_BoolFlags;
 
 /**
  * Flags internal to simulator that govern simulator behavior
+ * TODO make abstract?
  * @author John Turner
- *
  */
 public class SimPrivStateFlags extends Base_BoolFlags {
 	/**
