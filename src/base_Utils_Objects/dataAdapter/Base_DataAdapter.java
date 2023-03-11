@@ -5,7 +5,12 @@ import java.util.Map;
 
 import base_Utils_Objects.tools.flags.Base_BoolFlags;
 
-public abstract class Base_UIDataUpdater {	
+/**
+ * This class will provide a mechanism to share data (i.e. from a UI) within different components of an application.
+ * @author John Turner
+ *
+ */
+public abstract class Base_DataAdapter {	
 	/**
 	 * map to hold UI-driven int values, using the UI object idx's as keys
 	 */
@@ -18,13 +23,13 @@ public abstract class Base_UIDataUpdater {
 	 * map to hold UI-driven boolean values, using the UI object flags' idx's as keys 
 	 */
 	protected Map<Integer, Boolean> boolValues;	
-	public Base_UIDataUpdater() {initMaps();}
-	public Base_UIDataUpdater(Map<Integer, Integer> _iVals, Map<Integer, Float> _fVals, Map<Integer, Boolean> _bVals) {
+	public Base_DataAdapter() {initMaps();}
+	public Base_DataAdapter(Map<Integer, Integer> _iVals, Map<Integer, Float> _fVals, Map<Integer, Boolean> _bVals) {
 		initMaps();
 		setAllVals(_iVals, _fVals, _bVals);
 	}
 	
-	public Base_UIDataUpdater(Base_UIDataUpdater _otr) {
+	public Base_DataAdapter(Base_DataAdapter _otr) {
 		initMaps();
 		setAllVals(_otr);
 	}
@@ -35,7 +40,7 @@ public abstract class Base_UIDataUpdater {
 		boolValues = new HashMap<Integer, Boolean>();
 	}
 	
-	public final void setAllVals(Base_UIDataUpdater _otr) {
+	public final void setAllVals(Base_DataAdapter _otr) {
 		setAllVals(_otr.intValues,_otr.floatValues,_otr.boolValues);		
 	}
 	
@@ -111,7 +116,7 @@ public abstract class Base_UIDataUpdater {
 	 * @param BoolIdxsToIgnore indexes/keys of boolean values to ignore
 	 * @return whether or not updaters' data are different
 	 */
-	protected final boolean haveValuesChangedExceptPassed(Base_UIDataUpdater _otr, 
+	protected final boolean haveValuesChangedExceptPassed(Base_DataAdapter _otr, 
 			HashMap<Integer,Integer> IntIdxsToIgnore, 
 			HashMap<Integer,Integer> FloatIdxsToIgnore, 
 			HashMap<Integer,Integer> BoolIdxsToIgnore) {	
@@ -128,7 +133,7 @@ public abstract class Base_UIDataUpdater {
 	 * @param BoolIdxsToCheck
 	 * @return
 	 */
-	protected final boolean havePassedValuesChanged(Base_UIDataUpdater _otr, 
+	protected final boolean havePassedValuesChanged(Base_DataAdapter _otr, 
 			HashMap<Integer,Integer> IntIdxsToCheck, 
 			HashMap<Integer,Integer> FloatIdxsToCheck, 
 			HashMap<Integer,Integer> BoolIdxsToCheck) {
