@@ -33,8 +33,6 @@ public abstract class Java_AppManager {
 	 */
 	public final MessageObject msgObj;
 	
-	
-	
 	/**
 	 * physical display width and height this project is running on
 	 */
@@ -150,6 +148,11 @@ public abstract class Java_AppManager {
 	 */	
 	public abstract String getPrjDescr();
 	
+	/**
+	 * Whether or not we should show the machine data on launch
+	 * @return
+	 */
+	protected abstract boolean showMachineData();
 	
 	protected void setArgsMap(String[] _passedArgs) {
 		var tmpArgsMap = buildCmdLineArgs(_passedArgs);
@@ -165,12 +168,21 @@ public abstract class Java_AppManager {
 	// Misc utilities
 	
 	/**
-	 * display the current memory layout
+	 * display the current machine data and memory layout on launch, if specified
 	 */
 	public final void viewMachineData() {
-		Runtime runtime = Runtime.getRuntime();  
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-Host Machine Data----------------------------------------------------");
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----System-----------------------------------------------------------");
+		if (!showMachineData()){return;}
+		showDebugMachineData();
+	}
+	
+	/**
+	 * display the current machine data and memory layout either on launch, or on debug
+	 */
+	public final void showDebugMachineData() {
+		Runtime runtime = Runtime.getRuntime(); 
+		String className = getPrjNmShrt();
+		msgObj.dispInfoMessage("Java_AppManager", className,"-Host Machine Data----------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", className,"--System---------------------------------------------------------------");
 		TreeMap<String, TreeMap<String,String>> keyMap = new TreeMap<String, TreeMap<String,String>>();
 		keyMap.put("user", new TreeMap<String,String>());
 		keyMap.put("java", new TreeMap<String,String>());
@@ -189,21 +201,19 @@ public abstract class Java_AppManager {
 			var vals = keyVals.getValue();
 			if(vals.size() > 0) {
 				String typeKey = keyVals.getKey();
-				msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-"+typeKey+"-----------------------------------------------------------------");
+				msgObj.dispInfoMessage("Java_AppManager", className,"---------"+typeKey+"------------------------------------------------------");
 				for(var propKeyVals : vals.entrySet()) {
-					msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\t"+typeKey+"."+propKeyVals.getKey()+": "+System.getProperty(propKeyVals.getValue()));
+					msgObj.dispInfoMessage("Java_AppManager", className,"\t"+typeKey+"."+propKeyVals.getKey()+": "+System.getProperty(propKeyVals.getValue()));
 				}
-				msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"");
+				msgObj.dispInfoMessage("Java_AppManager", className,"");
 			}
 		}
 		
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tNumber of Available Processors: "+runtime.availableProcessors());
-		
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Display----------------------------------------------------------");
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tWidth:"+_displayWidth+" | Height:"+_displayHeight);
-		
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-Java VM Runtime Data-------------------------------------------------");
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Java Version-----------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tNumber of Available Processors: "+runtime.availableProcessors());		
+		msgObj.dispInfoMessage("Java_AppManager", className,        "-----Display----------------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tWidth:"+_displayWidth+" | Height:"+_displayHeight);		
+		msgObj.dispInfoMessage("Java_AppManager", className,"-Java VM Runtime Data-------------------------------------------------");
+		msgObj.dispInfoMessage("Java_AppManager", className,"-----Java Version-----------------------------------------------------");
 		var vers = Runtime.version();
         StringBuilder sb = new StringBuilder(vers.version().stream().map(Object::toString).collect(Collectors.joining(".")));
         sb.append("|");
@@ -217,16 +227,15 @@ public abstract class Java_AppManager {
                 sb.append(vers.pre().isPresent() ? ":" : "Info:").append(vers.optional().get());
             }
         }
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tVersion: "+sb.toString());		
-
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"-----Memory Layout----------------------------------------------------");  
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tVersion: "+sb.toString());
+		msgObj.dispInfoMessage("Java_AppManager", className,"-----Memory Layout----------------------------------------------------");  
 		long maxMem = runtime.maxMemory(), allocMem = runtime.totalMemory(), freeMem = runtime.freeMemory();
 		float freeMemKB = freeMem/1024.0f, allocMemKB = allocMem / 1024.0f, maxMemKB = maxMem/1024.0f, usedMemKB = (allocMemKB - freeMemKB);
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tMax mem Available: \t\t" + String.format("%.3f",maxMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tCurrent Available Free mem: \t" + String.format("%.3f",freeMemKB/1024.0f) +" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tTotal Allocated mem: \t\t" + String.format("%.3f",allocMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tUsed mem: \t\t\t" + String.format("%.3f",usedMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", getPrjNmShrt(),"\tTotal free mem: \t\t" +  String.format("%.3f",(maxMemKB - allocMemKB) / 1024.0f)+" MB"); 
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tMax mem Available: \t\t" + String.format("%.3f",maxMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tCurrent Available Free mem: \t" + String.format("%.3f",freeMemKB/1024.0f) +" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tTotal Allocated mem: \t\t" + String.format("%.3f",allocMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tUsed mem: \t\t\t" + String.format("%.3f",usedMemKB/1024.0f)+" MB");  
+		msgObj.dispInfoMessage("Java_AppManager", className,"\tTotal free mem: \t\t" +  String.format("%.3f",(maxMemKB - allocMemKB) / 1024.0f)+" MB"); 
 	
 	}//checkMemorySetup
 	
