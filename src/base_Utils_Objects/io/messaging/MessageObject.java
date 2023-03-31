@@ -200,7 +200,7 @@ public class MessageObject {
 	public String getCurrWallTimeAndTimeFromStart() {return timerMgr.getWallTimeAndTimeFromStart(dispDelim);}
 	public String getCurrWallTime() { return timerMgr.getCurrWallTime();}
 	public String getElapsedTimeStrForTimer(String timerName) { return timerMgr.getElapsedTimeStrForTimer(timerName);}
-	
+	public String getDateTimeStringForFileName() {return timerMgr.getDateTimeStringForFileName();}
 	/**
 	 * pass an array to display
 	 * @param _callingClass
