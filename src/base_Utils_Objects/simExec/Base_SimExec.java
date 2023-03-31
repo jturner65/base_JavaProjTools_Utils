@@ -65,27 +65,6 @@ public abstract class Base_SimExec {
 	protected final String timerName;
 	
 	/**
-	 * current simulation time in milliseconds from simStartTime - will be scaled by calling window to manage sim speed; set at start of every simMe call
-	 */
-	protected double nowTime;
-	
-	/**
-	 * Now time from last sim step
-	 */
-	protected double lastTime;
-	
-	/**
-	 * scaling time to speed up simulation == amount to multiply modAmtMillis by (i.e. amount of time between frames that should be simulated)
-	 */
-	protected float frameTimeScale = 1000.0f;	
-	
-	/**
-	 * Time step for simulation integration
-	 */
-	protected float timeStep = 0.01f;
-	
-	
-	/**
 	 * duration of an experiment = if not conducting an experiment, 
 	 * this is ignored, and sim will run forever in millis
 	 */
@@ -226,10 +205,9 @@ public abstract class Base_SimExec {
 	public final void resetSimExec(boolean showMsg) {
 		//Set named timer
 		setNamedTimerStartNow(timerName);
+		//TODO have currSim's reset sim be complete simulation resetting process
+		currSim.resetSim(showMsg);
 		
-		//reset Now to be 0
-		nowTime = 0;	
-		lastTime = 0;
 		resetSimExec_Indiv(showMsg);
 	}//resetSimExec
 	
@@ -276,22 +254,14 @@ public abstract class Base_SimExec {
 	 * @return whether sim is complete or not
 	 */
 	public final boolean stepSimulation(float modAmtMillis) {
-		//Record last time and set nowTime
-		float scaledMillisSinceLastFrame = modAmtMillis * frameTimeScale;		
-		lastTime = nowTime;
-		nowTime += scaledMillisSinceLastFrame;
-		boolean expDoneNow = false;
-		if(execFlags.getConductExp() && (nowTime >= expDurMSec)){//conducting experiments			
-			//make sure to cover last run, up to expDurMSec
-			nowTime = expDurMSec;
-			expDoneNow = true;
-		}
+		//Record last time, set current step's final nowTime; check if nowTime has passed beyond exp duration
+		boolean expDoneNow = currSim.checkExpNowTimeIsDone(modAmtMillis, execFlags.getConductExp(), expDurMSec);
 		
 		//sim implementation advancement - returns whether simulation has met conditions to stop or not
-		boolean indivSimIsDone = stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);		
+		boolean indivSimIsDone = stepSimulation_Indiv(modAmtMillis);		
 		//Experimental trials are finished so 
 		if(expDoneNow) {//we've been conducting experiments and now we're done
-			String nowDispTime = String.format("%08d", (long)nowTime);
+			String nowDispTime = currSim.getNowTimeForDisp();
 			long expDurMin= (expDurMSec/60000), expDirHour = expDurMin/60;
 			//either done with all trials or ready to move on to next trial
 			if(curTrial >= numTrials) {//performed enough trials to check if done				
@@ -338,7 +308,7 @@ public abstract class Base_SimExec {
 	 * @param scaledMillisSinceLastFrame is milliseconds since last frame scaled to speed up simulation
 	 * @return whether sim is complete or not
 	 */
-	protected abstract boolean stepSimulation_Indiv(float modAmtMillis, float scaledMillisSinceLastFrame);
+	protected abstract boolean stepSimulation_Indiv(float modAmtMillis);
 	
 	/**
 	 * Set up relevant variables for a suite of experimental trials.
@@ -564,7 +534,7 @@ public abstract class Base_SimExec {
 	 * Get the current simulation time in milliseconds from simStartTime
 	 * @return
 	 */
-	public final double getNowTime() {return nowTime;}
+	public final double getNowTime() {return currSim.getNowTime();}
 	
 	/**
 	 * Retrieve MessageObject for logging and message display
@@ -576,26 +546,26 @@ public abstract class Base_SimExec {
 	 * Set the scaling amount to speed up simulation
 	 * @param _ts
 	 */
-	public final void setTimeScale(float _ts) {		frameTimeScale = _ts;	}
+	public final void setTimeScale(float _ts) {		currSim.setTimeScale(_ts);	}
 	
 	/**
 	 * Retrieve the scaling amount to speed up simulation
 	 * @return
 	 */
-	public final float getTimeScale() {		return frameTimeScale;}	
+	public final float getTimeScale() {		return currSim.getTimeScale();}	
 	
 	
 	/**
 	 * Set the scaling amount to speed up simulation
 	 * @param _ts
 	 */
-	public final void setTimeStep(float _ts) {		timeStep = _ts;	}
+	public final void setTimeStep(float _ts) {		currSim.setTimeStep(_ts);}
 	
 	/**
 	 * Retrieve the scaling amount to speed up simulation
 	 * @return
 	 */
-	public final float getTimeStep() {		return timeStep;}	
+	public final float getTimeStep() {		return currSim.getTimeStep();}	
 	
 	/** 
 	 * Returns working directory  TODO get this some other way

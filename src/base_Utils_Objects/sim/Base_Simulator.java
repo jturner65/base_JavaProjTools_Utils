@@ -38,7 +38,33 @@ public abstract class Base_Simulator {
 	/**
 	 * Which sim layout to build
 	 */
-	protected int simLayoutToUse = 0;
+	protected int simLayoutToUse = 0;	
+	
+	/**
+	 * current simulation time in milliseconds from simStartTime - will be scaled by calling window to manage sim speed; set at start of every simMe call
+	 */
+	protected double nowTime;
+	
+	/**
+	 * Now time from last sim step
+	 */
+	protected double lastTime;
+	
+	/**
+	 * scaling time to speed up simulation == amount to multiply modAmtMillis by (i.e. amount of time between frames that should be simulated)
+	 */
+	protected float frameTimeScale = 1000.0f;	
+	/**
+	 * Time step for simulation integration
+	 */
+	protected float timeStep = 0.01f;
+	
+	/**
+	 * Per step simulation value scaled by frameTimeScale
+	 * Used to evolve nowTime
+	 */
+	protected float scaledMillisSinceLastFrame;
+	
 	
 	////////////////////////
 	// reporting stuff
@@ -54,7 +80,6 @@ public abstract class Base_Simulator {
 	 * main directory to put experiments
 	 */
 	private String baseDirStr;
-	
 	
 	/**
 	 * 
@@ -103,6 +128,35 @@ public abstract class Base_Simulator {
 	 * Sim-specific initialization
 	 */
 	protected abstract void initSim_Indiv();
+	
+	public final void resetSim(boolean showMsg) {
+		//reset Now to be 0
+		nowTime = 0;	
+		lastTime = 0;
+	
+	}//resetSim
+	
+	/**
+	 * Check if simulation NowTime has passed beyond experimental duration time.  Called at beginning of stepSimulation
+	 * @param modAmtMillis
+	 * @param conductExp
+	 * @param expDurMSec
+	 * @return whether experiments are being conducted and nowtime has evolved past the end of the experimental duration
+	 */
+	public final boolean checkExpNowTimeIsDone(float modAmtMillis, boolean conductExp, long expDurMSec) {
+		scaledMillisSinceLastFrame = modAmtMillis * frameTimeScale;	
+		//Record last time and set nowtime
+		lastTime = nowTime;
+		nowTime += scaledMillisSinceLastFrame;
+		boolean expDoneNow = false;
+		if(conductExp && (nowTime >= expDurMSec)){//conducting experiments			
+			//make sure to cover last run, up to expDurMSec
+			nowTime = expDurMSec;
+			expDoneNow = true;
+		}		
+		return expDoneNow;
+	}//checkExpNowTimeIsDone
+	
 	
 	/**
 	 * Intialize the simulator for a series of experimental trials
@@ -221,22 +275,56 @@ public abstract class Base_Simulator {
 	
 	
 	/**
-	 * Retrieve the scaling amount to speed up simulation
+	 * Retrieve the timestep for the simulation
 	 * @return
 	 */
-	public final float getTimeStep() {		return exec.getTimeStep();}	
+	public final float getTimeStep() {		return timeStep;}
+	
+	/**
+	 * Set the timestep for the simulation
+	 * @param _timeStep
+	 */
+	public final void setTimeStep(float _timeStep) {timeStep = _timeStep;}
+	
+	
+	/**
+	 * Set the scaling amount to speed up simulation
+	 * @param _ts
+	 */
+	public final void setTimeScale(float _ts) {		frameTimeScale = _ts;	}
 	
 	/**
 	 * Retrieve the scaling amount to speed up simulation
 	 * @return
 	 */
-	public final float getTimeScale() {		return exec.getTimeScale();}	
+	public final float getTimeScale() {		return frameTimeScale;}	
+	
+	/**
+	 * Return a display of NowTime and FrameTimeScale for simulation output/reporting
+	 * @return
+	 */
+	public final String getNowTimeAndFrameScaleStr() {
+		return "Frame Time : "+getNowTimeForDisp()+" Frame Size : " +  ((int)frameTimeScale);
+	}
+	
+	/**
+	 * Whether the passed timestamp is before the currently set nowTime
+	 * @param _timeStamp
+	 * @return
+	 */
+	public final boolean tsIsBeforeNowTime(long _timeStamp) {
+		return _timeStamp <= nowTime;
+	}
 	
 	/**
 	 * Simulation name
 	 * @return
 	 */
 	public String getName() {return name;}
+	
+	public final double getNowTime() {return nowTime;} 
+
+	public final String getNowTimeForDisp() {return String.format("%08d", (long)nowTime);}
 	
 	/**
 	 * Set all passed flags to passed value
