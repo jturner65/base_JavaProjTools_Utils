@@ -179,6 +179,17 @@ public class TimerManager {
 		result += getTimeString(now, curTimeToken);
 		return result;
 	}
+	
+	/**
+	 * Get a filename-safe date-time string version of now time
+	 */
+	public String getDateTimeStringForFileName() {
+		Instant now = Instant.now();
+		String result = getDateString(now, '-');
+		result += "_";
+		result += getTimeString(now, '-');
+		return result;
+	}//getDateTimeStringForFilename
 
 	/**
 	 * Build a date-time string with given date and time delimiter tokens
