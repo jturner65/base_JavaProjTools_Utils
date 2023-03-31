@@ -22,6 +22,27 @@ public class FileIOManager{
 	protected final String owner;
 	
 	public FileIOManager(MessageObject _msg, String _owner) {msg=_msg;owner=_owner; }	
+	
+	/**
+	 * Create the named directory
+	 * @param dName directory to attempt to create
+	 * @return whether successful or not
+	 */
+	public boolean createDirectory(String dName) {
+		File dir = new File(dName);	
+		if (!dir.exists()) {
+			msg.dispConsoleInfoMessage("FileIOManager ("+owner +")",  "createDirectory","Create directory: " + dName);	
+		    try{dir.mkdir();	    	return true;	    } 
+		    catch(SecurityException se){
+		    	msg.dispConsoleErrorMessage("FileIOManager ("+owner +")", "createDirectory", "Security Exception : Failed to create directory : " + dName+":\n"+se.getMessage());
+		    	return false;	    }  
+		    catch(Exception e){
+		    	msg.dispConsoleErrorMessage("FileIOManager ("+owner +")", "createDirectory", "Failed to create directory : " + dName+":\n"+e.getMessage());
+		    	return false;	    }  
+		}
+		return true;
+	}//createDirectory	
+	
 	/**
 	 * write data to file
 	 * @param fname file name
