@@ -592,6 +592,16 @@ public abstract class Base_SimExec {
 	 */
 	public boolean createRptDir(String dName) { return fileIO.createDirectory(dName);}//createRptDir
 
+	///////////////
+	/////DEBUG AND TESTING
 	
+	/**
+	 * Report on state of current simulator
+	 */
+	public final void TEST_simulator() {
+		String res = "\nSimulator Current State : \n";
+		res += currSim.toString();
+		msgObj.dispInfoMessage(name,"TEST_simulator", res);
+	}
 	
 }//class Base_SimExec
