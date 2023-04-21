@@ -5,6 +5,8 @@ package base_Utils_Objects.priorityQueue.base;
  * @author john
  *
  * @param <T> comparable object this queue will hold.  comparator determines priority
+ * 
+ * TODO : Needs to throw errors instead of error messages
  */
 public abstract class myPriorityQueue<T extends Comparable<T>>{
 	/**
@@ -26,7 +28,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	/**
 	 * array data structure holding data - using heap structure - ignore idx 0, using idxs 1->_size-1
 	 */
-	protected T[] heap;
+	protected T[] _heap;
 	/**
 	 * empty ctor
 	 */
@@ -48,7 +50,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	public myPriorityQueue(T[] _keys) {
 		//make 2x as large as initial key set
 		initHeap(_keys.length * 2);
-		System.arraycopy(_keys, _stIDX, heap, _stIDX, _keys.length);
+		System.arraycopy(_keys, _stIDX, _heap, _stIDX, _keys.length);
 		_numElems = _keys.length;		
 	}
 	
@@ -79,34 +81,34 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 		if(_newSize < _numElems) {return;}//no change if trying to shrink smaller than # of elements in queue
 		T[] tmpHeap = buildCompAra(_newSize+_stIDX);//ignore idx 0
 		//if heap already exists, copy current heap into tmpHeap
-		if((null != heap) && (_numElems > 0) && (_numElems < heap.length)){//copy from heap into tmpHeap	- heap should already be in appropriate order, so no need to reheapify
-			System.arraycopy(heap, _stIDX, tmpHeap, _stIDX, _numElems);	
+		if((null != _heap) && (_numElems > 0) && (_numElems < _heap.length)){//copy from heap into tmpHeap	- heap should already be in appropriate order, so no need to reheapify
+			System.arraycopy(_heap, _stIDX, tmpHeap, _stIDX, _numElems);	
 		}
-		heap = tmpHeap;
+		_heap = tmpHeap;
 		_size = _newSize;		
 	}//resizeHeap
 	/**
 	 * insert elem into priority queue
 	 * @param elem
 	 */
-	public void insert(T elem) {
+	public final void insert(T elem) {
 		if(isFull()) {resizeHeap(_size*2);}//increase size of heap before adding if heap is full-double size of array if necessary
-        heap[++_numElems] = elem;
-        up(heap,_numElems);		//heapify toward leaves
-        if (!isHeap(heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to add element : "+ elem);}
+        _heap[++_numElems] = elem;
+        up(_heap,_numElems);		//heapify toward leaves
+        if (!isHeap(_heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to add element : "+ elem);}
 	}//insert
 
 	/**
 	 * peek at 1st element from list
 	 * @return
 	 */
-	public T peekFirst() {
+	public final T peekFirst() {
 		if(isEmpty()) {return null;}
-		return heap[_stIDX];
+		return _heap[_stIDX];
 	}
-	public T peekElem(int idx) {
+	public final T peekElem(int idx) {
 		if(isEmpty() || idx > _numElems) {return null;}
-		return heap[idx];
+		return _heap[idx];
 	}
 
 	/**
@@ -114,17 +116,17 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * @param idx
 	 * @return
 	 */
-	protected T removeElem(int idx) {
+	protected final T removeElem(int idx) {
 		if(isEmpty()) {return null;}
-		T elem = heap[idx];
-		swap(heap, idx, _numElems);		//move element to remove from heap to end of heap ara
-        heap[_numElems] = null;     	//remove old elem	
+		T elem = _heap[idx];
+		swap(_heap, idx, _numElems);		//move element to remove from heap to end of heap ara
+        _heap[_numElems] = null;     	//remove old elem	
 		--_numElems;					//shrink # of elements
-        down(heap, idx, _numElems);					
+        down(_heap, idx, _numElems);					
  
         //shrink heap to half size, if possible
         if ((_numElems > 0) && (_numElems <= _size / 3)) {resizeHeap(_size / 2);}
-        if (!isHeap(heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to remove element  " + elem + " at idx : "+ idx);}
+        if (!isHeap(_heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to remove element  " + elem + " at idx : "+ idx);}
 		return elem;		
 	}//removeMin
 	
@@ -132,13 +134,13 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * remove and return first element - _stIDX is location of element
 	 * @return
 	 */
-	public T removeFirst() {return removeElem(_stIDX);}	
+	public final T removeFirst() {return removeElem(_stIDX);}	
 	/**
 	 * remove and return passed element - not necessarily the first element
 	 * @param elem
 	 * @return
 	 */
-	public T removeElem(T elem) {
+	public final T removeElem(T elem) {
 		if(isEmpty()) {return null;}
 		int idx = findElem(elem);
 		if(-1==idx) {return null;}				//not found
@@ -151,7 +153,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * @return
 	 */
 	private int findElem(T elem) {
-		for(int i=_stIDX; i<=_numElems;++i) {			if(heap[i].compareTo(elem) == 0) {return i;}		}
+		for(int i=_stIDX; i<=_numElems;++i) {			if(_heap[i].compareTo(elem) == 0) {return i;}		}
 		return -1;
 	}
 	
@@ -161,9 +163,9 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
 	 * test for heapness
 	 * @return
 	 */
-	public boolean isHeap() {return isHeap(heap,_stIDX);}
-    protected boolean isHeap(T[] ara) {return isHeap(ara,_stIDX);}
-    protected boolean isHeap(T[] ara, int idx) {
+	public final boolean isHeap() {return isHeap(_heap,_stIDX);}
+    protected final boolean isHeap(T[] ara) {return isHeap(ara,_stIDX);}
+    protected final boolean isHeap(T[] ara, int idx) {
         if (idx > _numElems) return true;
         int left = 2*idx;
         if (left  <= _numElems && compare(ara,idx, left))  return false;
@@ -177,7 +179,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
      * @param ara
      * @param idx
      */
-    protected void up(T[] ara, int idx) {
+    protected final void up(T[] ara, int idx) {
     	while (idx > 1 && compare(ara,idx/2, idx)) {		swap(ara, idx, idx/2);	idx = idx/2; } 
     }//up
    
@@ -187,7 +189,7 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
      * @param idx
      * @param n
      */
-    protected void down(T[] ara,int idx, int n) {
+    protected final void down(T[] ara,int idx, int n) {
     	int j;
         while (2*idx <= n) {
             j = 2*idx;
@@ -209,17 +211,20 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
     	return res;
     }
     
-    //return all members of heap in sorted order
-    public T[] getSortedElems() {
+    /**
+     * return all members of heap in sorted order
+     * @return
+     */
+    public final T[] getSortedElems() {
 		T[] res = buildCompAra(_numElems+_stIDX);
-    	System.arraycopy(heap, _stIDX, res, _stIDX, _numElems);
+    	System.arraycopy(_heap, _stIDX, res, _stIDX, _numElems);
     	int n = _numElems;
-    	for (int i=n/2; i>0; --i) {  		down(res, i, n); 	} 
-    	while (n>1) {   		swap(res, 1, n--);		down(res, 1, n);   	}
+    	for (int i=n/2; i>0; --i) {	down(res, i, n);} 
+    	while (n>1) {   			swap(res, 1, n--);		down(res, 1, n);   	}
     	
 		T[] res2 = buildCompAra(_numElems);
     	System.arraycopy(res, _stIDX, res2, 0, _numElems);    	
-        if (!isHeap(heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to build sorted ara of elements");}   	
+        if (!isHeap(_heap)) {System.out.println("HEAP ERROR : Heapness not preserved after attempting to build sorted ara of elements");}   	
     	return res2;    	
     }//getSortedElems
     
@@ -231,26 +236,45 @@ public abstract class myPriorityQueue<T extends Comparable<T>>{
      * @return
      */
 	protected abstract boolean compare(T[] ara, int i, int j);
-    protected void swap(T[] ara, int i, int j) { T s = ara[i];ara[i] = ara[j];ara[j] = s;}
+    protected final void swap(T[] ara, int i, int j) { T s = ara[i];ara[i] = ara[j];ara[j] = s;}
     
-	public boolean isEmpty() {return (_numElems == 0);}
-	public boolean isFull() {return (_numElems == _size);}
-	public int size() {return _numElems;}	
-	//for debugging only
-	public T[] getHeap() {return heap;}
+	public final boolean isEmpty() {return (_numElems == 0);}
+	public final boolean isFull() {return (_numElems == _size);}
+	public final int size() {return _numElems;}	
+	/**
+	 * For debugging/testing only - get a copy of the heap in current heap order
+	 * @return
+	 */
+	public final T[] getHeapCopy() {
+		T[] res = buildCompAra(_heap.length);
+		System.arraycopy(_heap, 0, res, 0, _heap.length);		
+		return res;
+	}
 
 	/**
 	 * @return the _numElems
 	 */
-	public int get_numElems() {		return _numElems;	}
+	public final int getNumElems() {		return _numElems;	}
 
-	/**
-	 * @param _numElems the _numElems to set
-	 */
-	public void set_numElems(int _numElems) {
-		this._numElems = _numElems;
-	}
+	///////////////
+	/////DEBUG AND TESTING
 	
+	/**
+	 * Validate priority queue heap state and integrity
+	 * @name PQ's name, for test output
+	 * @return
+	 */
+	public final String TEST_verifyHeapState(String name) {
+		//first determine FEL's current state
+		String res = "";
+		if (isEmpty()) {res += name+" is Empty ";} 
+		else if (isFull()) { res += name+"FEL is Full ";}
+		boolean isHeap = isHeap();
+		res += " | Heapness of " + name + (isHeap ? "is currently preserved. " : "IS NOT PRESERVED!!! ");
+		int numElems = size();
+		res += " | " +name +" currently has " + numElems + " elements.";
+		return res;
+	}//TEST_verifyHeapState
+		
 }//class myPriorityQueue
-
 

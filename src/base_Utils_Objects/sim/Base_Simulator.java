@@ -159,7 +159,7 @@ public abstract class Base_Simulator {
 	
 	
 	/**
-	 * Intialize the simulator for a series of experimental trials
+	 * Initialize the simulator for a series of experimental trials.  Only call from Base_SimExec
 	 * @param numTrials
 	 */
 	public final void initExperimentalTrials(int numTrials) {
