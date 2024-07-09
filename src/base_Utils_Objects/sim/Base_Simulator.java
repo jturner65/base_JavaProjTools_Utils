@@ -1,5 +1,9 @@
 package base_Utils_Objects.sim;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
 import base_Utils_Objects.io.messaging.MessageObject;
 import base_Utils_Objects.simExec.Base_SimExec;
 
@@ -32,13 +36,35 @@ public abstract class Base_Simulator {
 	protected Base_SimDataAdapter dataUpdate;
 	
 	/**
+	 * Which sim layout to build
+	 */
+	protected int simLayoutToUse = 0;
+	
+	////////////////////////
+	// reporting stuff
+	/**
+	 * string representation of date for report data
+	 */
+	private String rptDateNowPrfx;
+	/**
+	 * string representation of date for report data
+	 */
+	private String rptExpDir;
+	/**
+	 * main directory to put experiments
+	 */
+	private String baseDirStr;
+	
+	
+	/**
 	 * 
 	 * @param _exec
 	 * @param _name
 	 */
-	public Base_Simulator(Base_SimExec _exec, String _name) {
+	public Base_Simulator(Base_SimExec _exec, String _name, int _simLayoutToUse) {
 		exec = _exec;
 		name = _name;
+		simLayoutToUse = _simLayoutToUse;
 		msgObj = _exec.getMsgObj();
 		//build initial data updater
 		dataUpdate = exec.buildSimDataUpdater();
@@ -65,13 +91,101 @@ public abstract class Base_Simulator {
 	 */
 	protected final void initSim() {
 		simFlags = new SimPrivStateFlags(this, exec.getNumSimFlags());
-		
+		rptDateNowPrfx = "ExpDate_"+msgObj.getDateTimeStringForFileName()+"_";
+		rptDateNowPrfx += name+"_";
+		//root directory to put experimental results = add to all derived exp res directories
+		String initBaseDir = setAndCreateRptExpDir(exec.getCWD(),"experiments");		
+		baseDirStr = setAndCreateRptExpDir(initBaseDir, "Base_experiments_"+name);
+				
 		initSim_Indiv();
 	}
 	/**
 	 * Sim-specific initialization
 	 */
 	protected abstract void initSim_Indiv();
+	
+	/**
+	 * Intialize the simulator for a series of experimental trials
+	 * @param numTrials
+	 */
+	public final void initExperimentalTrials(int numTrials) {
+		//implementation specific trials init
+		initExperimentalTrials_Indiv(numTrials);
+		
+		//build experimental output directory
+		buildRptExpDir();
+	}//initExperimentalTrials
+	
+	/**
+	 * Build reporting base directory
+	 * @return
+	 */
+	protected final String buildRptExpDir() {
+		rptExpDir = setAndCreateRptExpDir(baseDirStr, rptDateNowPrfx + "dir");
+		return rptExpDir;
+	}
+
+	/**
+	 * Implementation-specific experimental setup
+	 * @param numTrials
+	 */
+	protected abstract void initExperimentalTrials_Indiv(int numTrials);
+	
+	/**
+	 * end a round of experiments and save this round's results
+	 * @param curTrial
+	 * @param numTrials
+	 * @param expDurMSec
+	 */
+	public final void endExperiment(int curTrial, int numTrials, long expDurMSec) {
+		//finish up individual experiment - save results at they are now, with appropriate timestamp, uav count, and other appropriate values for file name
+		//record results
+		//build base file name
+		String bseFileName = rptExpDir + File.separatorChar + rptDateNowPrfx +"trl_"+curTrial+"_of_"+numTrials+"_dur_"+expDurMSec ;
+		//implementation-specific : save reporting at indicated file name
+		HashMap<String, String[]> reportRes = endExperiment_Indiv(bseFileName, curTrial);
+		//Write results : key is filename; value is string array results
+		for (Entry<String, String[]> keyVal : reportRes.entrySet()) {			
+			exec.saveReport(keyVal.getKey(), keyVal.getValue());
+		}
+	}//endExperiment
+	
+	/**
+	 * Implementation-specific end to a round of experiments and save this round's results
+	 * @param bseFileName base file name path to save experiment
+	 * @param curTrial
+	 * @return map where key is filename and value is string array of report values to write
+	 */
+	protected abstract HashMap<String, String[]> endExperiment_Indiv(String bseFileName, int curTrial);
+	
+	
+	/**
+	 * finish entire set of trials, save last trial's data and then calculate and save aggregate/average data
+	 * @param curTrial
+	 * @param numTrials
+	 * @param expDurMSec
+	 */
+	public final void endTrials(int curTrial, int numTrials, long expDurMSec) {
+		endExperiment(curTrial,numTrials,expDurMSec);		
+		//aggregate results and save to special files/directories
+		String finalResDir = setAndCreateRptExpDir(rptExpDir,"Final_Exp_Final_Results");
+		
+		//process aggregate aras of aras of data and build 
+		String finalResFNmeBase = finalResDir + File.separatorChar + "FinalRes_Trls_"+numTrials+"_dur_"+expDurMSec;
+		//implementation-specific : save reporting at indicated file name
+		HashMap<String, String[]> reportRes = endTrials_Indiv(finalResFNmeBase, curTrial);
+		//Write results : key is filename; value is string array results
+		for (Entry<String, String[]> keyVal : reportRes.entrySet()) {			
+			exec.saveReport(keyVal.getKey(), keyVal.getValue());
+		}
+	}//endTrials
+	
+	/**
+	 * Implementation-specific ending set of trials functionality, to construct report map
+	 * @param finalResFNmeBase
+	 * @param numTrials
+	 */
+	protected abstract HashMap<String, String[]> endTrials_Indiv(String finalResFNmeBase, int numTrials);
 	
 	/**
 	 * Get sim flag value for passed idx
@@ -105,6 +219,25 @@ public abstract class Base_Simulator {
 	 */
 	public abstract void setSimDrawVis(boolean val);
 	
+	
+	/**
+	 * Retrieve the scaling amount to speed up simulation
+	 * @return
+	 */
+	public final float getTimeStep() {		return exec.getTimeStep();}	
+	
+	/**
+	 * Retrieve the scaling amount to speed up simulation
+	 * @return
+	 */
+	public final float getTimeScale() {		return exec.getTimeScale();}	
+	
+	/**
+	 * Simulation name
+	 * @return
+	 */
+	public String getName() {return name;}
+	
 	/**
 	 * Set all passed flags to passed value
 	 * @param idxs
@@ -137,5 +270,19 @@ public abstract class Base_Simulator {
 	 */
 	protected abstract void handlePrivFlags_Indiv(int idx, boolean val, boolean oldVal);
 	
+	/**
+	 * Create the passed directory as a subdirectory within the given base directory, and return the new directory's full name
+	 * @param _baseDirStr directory to create within
+	 * @param _newDirName subdir to create
+	 * @return fully qualified new directory or error message if failed
+	 */
+	protected final String setAndCreateRptExpDir(String _baseDirStr, String _newDirName) {
+		String newDir = _baseDirStr + File.separatorChar + _newDirName;
+		boolean success = exec.createRptDir(newDir);
+		if (success) {return newDir;}
+		return "::::Unable to create directory!::::";
+	}
 
+	
+	
 }//class Base_Simulator

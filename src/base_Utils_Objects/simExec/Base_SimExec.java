@@ -3,6 +3,7 @@ package base_Utils_Objects.simExec;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import base_Utils_Objects.io.file.FileIOManager;
 import base_Utils_Objects.io.messaging.MessageObject;
 import base_Utils_Objects.io.messaging.MsgCodes;
 import base_Utils_Objects.sim.Base_SimDataAdapter;
@@ -15,6 +16,10 @@ public abstract class Base_SimExec {
 	 */
 	public final String name;
 	/**
+	 * Base name of the simulations this sim exec manages
+	 */
+	public final String simName;
+	/**
 	 * Manager for time functions. Records beginning of program execution. Singleton
 	 */
 	protected final TimerManager timeMgr;
@@ -23,6 +28,11 @@ public abstract class Base_SimExec {
 	 * MessageObject for output to console or log
 	 */
 	protected final MessageObject msgObj;
+	
+	/**
+	 * Manage file IO
+	 */
+	protected final FileIOManager fileIO;
 	
 	/**
 	 * Flags object managing sim exec functionality
@@ -40,6 +50,11 @@ public abstract class Base_SimExec {
 	protected Base_Simulator[] sims;
 	
 	/**
+	 * Data updater to keep UI/configuration data in synch between interface and individual sims. Follows sim data format!
+	 */
+	protected Base_SimDataAdapter masterDataUpdate;
+	
+	/**
 	 * Currently executing simulation
 	 */
 	protected Base_Simulator currSim;
@@ -53,32 +68,47 @@ public abstract class Base_SimExec {
 	 * current simulation time in milliseconds from simStartTime - will be scaled by calling window to manage sim speed; set at start of every simMe call
 	 */
 	protected double nowTime;
+	
 	/**
 	 * Now time from last sim step
 	 */
 	protected double lastTime;
 	
 	/**
-	 * Data updater to keep UI/configuration data in synch between interface and individual sims. Follows sim data format!
-	 */
-	protected Base_SimDataAdapter masterDataUpdate;
-	
-	/**
-	 * scaling time to speed up simulation == amount to multiply modAmtMillis by
+	 * scaling time to speed up simulation == amount to multiply modAmtMillis by (i.e. amount of time between frames that should be simulated)
 	 */
 	protected float frameTimeScale = 1000.0f;	
 	
 	/**
+	 * Time step for simulation integration
+	 */
+	protected float timeStep = 0.01f;
+	
+	
+	/**
+	 * duration of an experiment = if not conducting an experiment, 
+	 * this is ignored, and sim will run forever in millis
+	 */
+	private long expDurMSec;
+	/**
+	 * # of experiments to conduct, to get multiple result sets
+	 */
+	private int numTrials = 1, curTrial = 1;
+	
+	
+	/**
 	 * Create a simulation executive that will manage one or more simulations
 	 * @param _win the owning window, or null if console
-	 * @param _name the name of this simulation executive
+	 * @param _name the name of the simulations this executive manages
 	 */
-	public Base_SimExec(String _name, int _maxSimLayouts) {
-		name = _name;
+	public Base_SimExec(String _simName, int _maxSimLayouts) {
+		simName = _simName;
+		name = simName +"_SimExec";
 		maxSimLayouts = _maxSimLayouts;
 		msgObj = MessageObject.getInstance();
+		fileIO =  new FileIOManager(msgObj, name);
 		timeMgr = TimerManager.getInstance();	
-		timerName = this.name+"_simExecStartTime";
+		timerName = name+"_simExecStartTime";
 		execFlags = new SimExecPrivStateFlags(this);
 		masterDataUpdate = buildSimDataUpdater();
 	}
@@ -96,13 +126,12 @@ public abstract class Base_SimExec {
 	 */
 	protected abstract void initSimExec_Indiv();
 	
-	
 	/**
 	 * Create the simulations this sim exec will manage
 	 */
 	public final void createAllSims() {
 		sims = new Base_Simulator[maxSimLayouts];
-		for(int i=0;i<maxSimLayouts;++i) {sims[i] = buildSimOfType(name, i);}
+		for(int i=0;i<maxSimLayouts;++i) {sims[i] = buildSimOfType(simName+"_"+i, i);}
 		//TODO build Base_SimDataUpdater for specific sim type to be owned by this sim exec
 		//to be populated by owning interface and broadcast to current sim, or to be read from current sim and 
 		//then broadcast to interface as appropriate.
@@ -165,9 +194,19 @@ public abstract class Base_SimExec {
 	public final void initSimWorld(boolean _showMsg) {		
 		//Instance sim exec implementation
 		initSimWorld_Indiv();
+		//reset all experiment values when sim world is changed - default behavior is sim will go forever, until stopped
+		expDurMSec = Long.MAX_VALUE;
+		numTrials = Integer.MAX_VALUE;
+		curTrial = 1;
+		execFlags.setConductExp(false);
+		execFlags.setConductSweepExps(false);
 		resetSimExec(_showMsg);
 	}
 	
+	public final void setConductSweepExperiment(boolean _conductSweepExp) {
+		execFlags.setConductSweepExps(_conductSweepExp);
+	}
+		
 	/**
 	 * Whether this sim executive has a render interface (whether it belongs to a 
 	 * console application or a UI-enabled one.)  Override in Base_UISimExecutive
@@ -241,11 +280,57 @@ public abstract class Base_SimExec {
 		float scaledMillisSinceLastFrame = modAmtMillis * frameTimeScale;		
 		lastTime = nowTime;
 		nowTime += scaledMillisSinceLastFrame;
-		//sim implementation advancement
-		boolean isDone = stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);		
+		boolean expDoneNow = false;
+		if(execFlags.getConductExp() && (nowTime >= expDurMSec)){//conducting experiments			
+			//make sure to cover last run, up to expDurMSec
+			nowTime = expDurMSec;
+			expDoneNow = true;
+		}
 		
-		return isDone;
+		//sim implementation advancement - returns whether simulation has met conditions to stop or not
+		boolean indivSimIsDone = stepSimulation_Indiv(modAmtMillis, scaledMillisSinceLastFrame);		
+		//Experimental trials are finished so 
+		if(expDoneNow) {//we've been conducting experiments and now we're done
+			String nowDispTime = String.format("%08d", (long)nowTime);
+			long expDurMin= (expDurMSec/60000), expDirHour = expDurMin/60;
+			//either done with all trials or ready to move on to next trial
+			if(curTrial >= numTrials) {//performed enough trials to check if done				
+				if (!execFlags.getConductSweepExps()) {//done with all trials, and not sweeping
+					msgObj.dispInfoMessage(name,"simMe","NowTime : "+nowDispTime+ " | Finished with all " +numTrials +" trials of experiments of duration : " + expDurMSec +" ms -> " +expDurMin+ " min -> " + expDirHour + " hours");	
+					endAllTrials();
+					return true;//if done with experimental trials then stop sim
+				} else {//finished with set of trials for current sweeping variable
+					if(sweepVarIsFinished()) {//finished sweeping through sweep variable, then end and exit
+						msgObj.dispInfoMessage(name,"simMe","NowTime : "+nowDispTime+ " | Finished with all " +numTrials +" trials for all team sizes, of experiments of duration : " + expDurMSec +" ms -> " +expDurMin+ " min -> " + expDirHour + " hours");	
+						endAllTrials();
+						return true;//if done with experimental trials then stop sim						
+					} else {//save current trials, increment team size, restart set of trials with new team size
+						msgObj.dispInfoMessage(name,"simMe","NowTime : "+nowDispTime+ " | Finished with all " +numTrials +" trials for "+getSweepExpMessage()+", each of duration  : " + expDurMSec +" ms -> " +expDurMin+ " min -> " + expDirHour + " hours");	
+						endTrialsForSweep();
+						return false;
+					}
+				}
+			}
+			//otherwise move on to next trial - reset environment and go again 
+			msgObj.dispInfoMessage(name,"simMe","NowTime : "+nowDispTime+ " | Finished with trial " + curTrial + " of " +numTrials +" total trials of experiments, each of duration  : " + expDurMSec +" ms -> " +expDurMin+ " min -> " + expDirHour + " hours");	
+			endExperiment();			
+			++curTrial;		
+			startExperiment();
+		}		
+		return indivSimIsDone;
 	}//stepSimulation	
+	
+	/**
+	 * Variable responsible for sweep experiment is finished
+	 * @return
+	 */
+	protected abstract boolean sweepVarIsFinished();
+	
+	/**
+	 * Message to display when sweeping experiment has finished all trials for specific sweep variable setting
+	 * @return
+	 */
+	protected abstract String getSweepExpMessage();
 	
 	/**
 	 * Advance current sim using nowTime as the time to simulate up to
@@ -254,6 +339,79 @@ public abstract class Base_SimExec {
 	 * @return whether sim is complete or not
 	 */
 	protected abstract boolean stepSimulation_Indiv(float modAmtMillis, float scaledMillisSinceLastFrame);
+	
+	/**
+	 * Set up relevant variables for a suite of experimental trials.
+	 * @param _mins minutes for each experiment to last
+	 * @param _numTrials number of expermental trials to conduct
+	 * @params _conductSweepExp whether to conduct sweep experiments or not
+	 */
+	public final void initializeTrials(int _mins, int _numTrials) {
+		expDurMSec = _mins * 60000;
+		numTrials = _numTrials;
+		curTrial = 1;
+		//Implementation-specific initialization for suite of trials before sim is initialized
+		initializeTrials_Indiv(execFlags.getConductSweepExps());
+		//Initialize sim
+		currSim.initExperimentalTrials(numTrials);
+		startExperiment();
+		execFlags.setConductExp(true);
+	}//initializeTrials
+	
+	/**
+	 * Set up relevant variables for implementation-specific initialization of a suite of trials
+	 */
+	protected abstract void initializeTrials_Indiv(boolean _conductSweepExp);
+	
+	/**
+	 * entry point for experiments, either window based or command line
+	 */
+	private void startExperiment() {
+		//set/reset anything that needs to be addressed when starting a new trial
+		resetSimExec(false); 		
+	}//startExperiment	
+	
+	/**
+	 * end current experiment, if one is running. 
+	 */
+	private void endExperiment() {		
+		currSim.endExperiment(curTrial, numTrials, expDurMSec);	
+	}//endExperiment
+	
+	/**
+	 * call to end final experiment
+	 */
+	private void endAllTrials() {
+		currSim.endTrials(curTrial,numTrials,expDurMSec);
+		//implementation-specific trial end functionality
+		endAllTrials_Indiv();
+		//if finished with all trials, reset values
+		initSimWorld(false);
+	}//endTrials	
+	/**
+	 * Implementation-specific call to end final experimental trial
+	 */
+	protected abstract void endAllTrials_Indiv();
+	
+	/**
+	 *  end a set of trials for a specific sweep variable, set to next sweep variable, restart experimenting
+	 */
+	protected final void endTrialsForSweep() {
+		currSim.endTrials(curTrial,numTrials,expDurMSec);
+		
+		endTrialsForSweep_Indiv();
+		
+		//Restart trial suite with new values
+		curTrial = 1;
+		currSim.initExperimentalTrials(numTrials);
+		startExperiment();
+	}//endTrialsForSweep()
+	
+	/**
+	 * Implementation-specific end of trials sweep - evolve sweep variables for next set of trials
+	 */
+	protected abstract void endTrialsForSweep_Indiv();
+	
 	
 	
 	///////////////////////////
@@ -426,6 +584,19 @@ public abstract class Base_SimExec {
 	 */
 	public final float getTimeScale() {		return frameTimeScale;}	
 	
+	
+	/**
+	 * Set the scaling amount to speed up simulation
+	 * @param _ts
+	 */
+	public final void setTimeStep(float _ts) {		timeStep = _ts;	}
+	
+	/**
+	 * Retrieve the scaling amount to speed up simulation
+	 * @return
+	 */
+	public final float getTimeStep() {		return timeStep;}	
+	
 	/** 
 	 * Returns working directory  TODO get this some other way
 	 * @return
@@ -434,5 +605,23 @@ public abstract class Base_SimExec {
 		Path currentRelativePath = Paths.get("");
 		return currentRelativePath.toAbsolutePath().toString();	
 	}// getCWD()
+	
+	
+	/**
+	 * save string array of data to file filename
+	 * @param fileName
+	 * @param data
+	 * @return whether successful or not
+	 */
+	public boolean saveReport(String fileName, String[] data) {return fileIO.saveStrings(fileName, data);}//saveReport
+	
+	/**
+	 * Create a destination directory for a report
+	 * @param dName
+	 * @return
+	 */
+	public boolean createRptDir(String dName) { return fileIO.createDirectory(dName);}//createRptDir
+
+	
 	
 }//class Base_SimExec

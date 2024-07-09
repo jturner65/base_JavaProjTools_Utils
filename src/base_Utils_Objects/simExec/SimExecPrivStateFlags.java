@@ -2,6 +2,11 @@ package base_Utils_Objects.simExec;
 
 import base_Utils_Objects.tools.flags.Base_BoolFlags;
 
+/**
+ * Class to monitor and manage sim executive state
+ * @author John Turner
+ *
+ */
 public class SimExecPrivStateFlags extends Base_BoolFlags {
 	/**
 	 * Owning sim exec
