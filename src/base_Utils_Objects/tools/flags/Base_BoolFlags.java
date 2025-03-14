@@ -172,11 +172,10 @@ public abstract class Base_BoolFlags {
 	 * @param idx idx to set
 	 * @param val value to set
 	 */
-	public final void forceVisFlag(int idx, boolean val) {
+	public final void _forceFlag(int idx, boolean val) {
 		int flIDX = idx/32, mask = 1<<(idx%32);
 		flags[flIDX] = (val ?  flags[flIDX] | mask : flags[flIDX] & ~mask);
-	}	
-	
+	}		
 	
 	/**
 	 * Toggle the button represented by passed idx
@@ -193,7 +192,7 @@ public abstract class Base_BoolFlags {
 	 */
 	public final void setFlag(int idx, boolean val) {
 		boolean oldVal = getFlag(idx);
-		forceVisFlag(idx, val);
+		_forceFlag(idx, val);
 		//Handle debug mode
 		if (idx == debugIDX) {
 			handleSettingDebug(val);
@@ -248,7 +247,5 @@ public abstract class Base_BoolFlags {
 			setFlag(i, Boolean.parseBoolean(token.split("\\s")[i].trim()));
 		}
 	}//setValFromStrTokens
-	
-	
 
 }//class Base_BoolFlags

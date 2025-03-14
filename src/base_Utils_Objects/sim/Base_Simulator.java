@@ -16,10 +16,12 @@ public abstract class Base_Simulator {
 	 * Owning simulator executive
 	 */
 	protected final Base_SimExec exec;
+	
 	/**
 	 * Name of this simulation world
 	 */
 	protected final String name;
+	
 	/**
 	 * msg object for output to console or log
 	 */
@@ -54,6 +56,7 @@ public abstract class Base_Simulator {
 	 * scaling time to speed up simulation == amount to multiply modAmtMillis by (i.e. amount of time between frames that should be simulated)
 	 */
 	protected float frameTimeScale = 1000.0f;	
+	
 	/**
 	 * Time step for simulation integration
 	 */
@@ -348,8 +351,7 @@ public abstract class Base_Simulator {
 	 * @param val
 	 */
 	protected abstract void handlePrivFlagsDebugMode_Indiv(boolean val);
-	
-	
+		
 	/**
 	 * Switch structure only that handles priv flags being set or cleared. Called from WinAppPrivStateFlags structure
 	 * @param idx
@@ -369,8 +371,6 @@ public abstract class Base_Simulator {
 		boolean success = exec.createRptDir(newDir);
 		if (success) {return newDir;}
 		return "::::Unable to create directory!::::";
-	}
-
-	
+	}	
 	
 }//class Base_Simulator
