@@ -5,13 +5,10 @@ package base_Utils_Objects.tools;
  * @author John Turner
  *
  */
-public class myTools {
-	
-	
+public class myTools {	
 	//no instancing
 	private myTools() {}
-	
-    
+	   
     /**
      * Return a string representation of an array of byte digits concatenated, representing a very long number
      * @param vals

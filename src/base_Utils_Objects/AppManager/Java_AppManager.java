@@ -1,6 +1,5 @@
 package base_Utils_Objects.appManager;
 
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.util.HashMap;
@@ -37,8 +36,7 @@ public abstract class Java_AppManager {
 	 * physical display width and height this project is running on
 	 */
 	protected final int _displayWidth, _displayHeight;
-	
-	
+		
 	/**
 	 * Whether this application has a graphical UI or is strictly a console application
 	 */
@@ -57,9 +55,9 @@ public abstract class Java_AppManager {
 		var ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		//get primary monitor size				
 		if(!ge.isHeadlessInstance()) {
-			GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-			_displayWidth = gd.getDisplayMode().getWidth();
-			_displayHeight = gd.getDisplayMode().getHeight();
+			var dispMode = ge.getDefaultScreenDevice().getDisplayMode();
+			_displayWidth = dispMode.getWidth();
+			_displayHeight = dispMode.getHeight();
 		} else {
 			//Currently do not support headless execution. TODO
 			_displayWidth = 0;
