@@ -69,12 +69,15 @@ public enum ConsoleCLR {
     WHITE_BACKGROUND_BRIGHT("\033[0;107m");     // WHITE
 	
     private final String value;
-	private static Map<String, ConsoleCLR> map = new HashMap<String, ConsoleCLR>(); 
+    private static Map<String, ConsoleCLR> valmap = new HashMap<String, ConsoleCLR>(); 
+    private static Map<Integer, ConsoleCLR> map = new HashMap<Integer, ConsoleCLR>(); 
+	
     private ConsoleCLR(String _val){value = _val;}     
-	static { for (ConsoleCLR enumV : ConsoleCLR.values()) { map.put(enumV.value, enumV);}}
+	static { for (ConsoleCLR enumV : ConsoleCLR.values()) { valmap.put(enumV.value, enumV); map.put(enumV.ordinal(), enumV);}}
 	public String getVal(){return value;}
-	public static ConsoleCLR getVal(String idx){return map.get(idx);}
-	public static int getNumVals(){return map.size();}						//get # of values in enum
+	public static ConsoleCLR getEnumByIndex(int idx) {return map.get(idx);} 
+	public static ConsoleCLR getEnumFromValue(String idx){return valmap.get(idx);}
+	public static int getNumVals(){return valmap.size();}						//get # of values in enum
 	@Override
     public String toString() { return value; }
 }//console printout colors enum
