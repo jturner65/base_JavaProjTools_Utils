@@ -36,12 +36,20 @@ public abstract class Java_AppManager {
 	 * physical display width and height this project is running on
 	 */
 	protected final int _displayWidth, _displayHeight;
-		
+	
+	/**
+	 * Whether or not a physical display is connected to the system this is running on.
+	 */
+	protected final boolean _isHeadless;
 	/**
 	 * Whether this application has a graphical UI or is strictly a console application
 	 */
 	public final boolean hasGraphicalUI;
 	
+	/**
+	 * Maximum memory the JVM can expand to if necessary.
+	 */
+	public final Long maxJVMMem;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Misc Fields
@@ -53,8 +61,9 @@ public abstract class Java_AppManager {
 	
 	public Java_AppManager(boolean _hasGraphicalUI) {
 		var ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		//get primary monitor size				
-		if(!ge.isHeadlessInstance()) {
+		_isHeadless = ge.isHeadlessInstance();
+		//get primary monitor size if not headless
+		if(!_isHeadless) {
 			var dispMode = ge.getDefaultScreenDevice().getDisplayMode();
 			_displayWidth = dispMode.getWidth();
 			_displayHeight = dispMode.getHeight();
@@ -63,6 +72,7 @@ public abstract class Java_AppManager {
 			_displayWidth = 0;
 			_displayHeight = 0;
 		}
+		maxJVMMem = Runtime.getRuntime().maxMemory();
 		//Whether the implementation is Console_AppManager or GUI_AppManager
 		hasGraphicalUI = _hasGraphicalUI;
 		//project arguments
@@ -166,7 +176,7 @@ public abstract class Java_AppManager {
 	// Misc utilities
 	
 	/**
-	 * display the current machine data and memory layout on launch, if specified
+	 * Display the current machine data and memory layout on launch, if specified
 	 */
 	public final void viewMachineData() {
 		if (!showMachineData()){return;}
@@ -174,7 +184,66 @@ public abstract class Java_AppManager {
 	}
 	
 	/**
-	 * display the current machine data and memory layout either on launch, or on debug
+	 * Returns the number of processors available to the JVM.
+	 * 
+	 * Applications built off Java_AppManager often use this value as a gauge of
+	 * how many threads to instantiate. 
+	 * 
+	 * This value may change during a particular invocation of the virtual machine.
+	 * Applications that are sensitive to the number of available processors should
+	 * therefore occasionally poll this property and adjust their resource usage 
+	 * appropriately.
+	 *  
+	 * @return
+	 */
+	public final int getNumThreadsAvailable() {return Runtime.getRuntime().availableProcessors();}
+	
+	//Used by memory status array
+	public static final int maxMemIDX = 0;
+	public static final int allocMemIDX = 1;
+	public static final int growthMemIDX = 2;
+	public static final int freeMemIDX = 3;
+	public static final int usedMemIDX = 4;
+
+	
+	public static final String[] memDispText = new String[] {
+		"Max Memory Available to JVM:",           
+		"Total Allocated Memory to JVM:",       
+		"Available Memory for the JVM to grow:",
+		"Current Available Free Memory:",         
+		"Current Used Memory:"                
+	};
+	
+	public static final String[] memDispTextAbbrev = new String[] {
+			"Max JVM","TTL JVM","Space JVM","Free","Used"
+	};
+	
+	/**
+	 * Return a map of the JVM memory status, in bytes
+	 * 	'maxMemIDX' :  maximum amount of memory that the JVM will attempt to use
+	 * 	'allocMemIDX' : total amount of memory currently allocated to the JVM
+	 *  'growthMemIDX' : max - alloc - amount of memory growth available to JVM
+	 * 	'freeMemIDX' : amount of free memory in the JVM
+	 * 	'usedMemIDX' : alloc - free - amount of memory used by program
+	 * @return 
+	 */
+	public final Long[] getMemoryStatusMap() {
+		Runtime runtime = Runtime.getRuntime(); 
+		Long allocMem = runtime.totalMemory(), freeMem = runtime.freeMemory();
+		Long[] res = new Long[] {
+				// JVM/Heap stats
+				maxJVMMem,
+				allocMem,
+				(maxJVMMem - allocMem),
+				// Program-related stats
+				freeMem,
+				(allocMem-freeMem)
+		};
+		return res;
+	}//getMemoryStatusMap
+		
+	/**
+	 * Display the current machine data and memory layout either on launch, or on debug
 	 */
 	public final void showDebugMachineData() {
 		Runtime runtime = Runtime.getRuntime(); 
@@ -208,8 +277,12 @@ public abstract class Java_AppManager {
 		}
 		
 		msgObj.dispInfoMessage("Java_AppManager", className,"\tNumber of Available Processors: "+runtime.availableProcessors());		
-		msgObj.dispInfoMessage("Java_AppManager", className,        "-----Display----------------------------------------------------------");
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tWidth:"+_displayWidth+" | Height:"+_displayHeight);		
+		if (_isHeadless) {
+			msgObj.dispInfoMessage("Java_AppManager", className,"-----No Display Connected-(Headless Execution)------------------------");
+		} else {
+			msgObj.dispInfoMessage("Java_AppManager", className,"-----Display----------------------------------------------------------");
+			msgObj.dispInfoMessage("Java_AppManager", className,"\tWidth:"+_displayWidth+" | Height:"+_displayHeight);			
+		}
 		msgObj.dispInfoMessage("Java_AppManager", className,"-Java VM Runtime Data-------------------------------------------------");
 		msgObj.dispInfoMessage("Java_AppManager", className,"-----Java Version-----------------------------------------------------");
 		var vers = Runtime.version();
@@ -227,14 +300,11 @@ public abstract class Java_AppManager {
         }
 		msgObj.dispInfoMessage("Java_AppManager", className,"\tVersion: "+sb.toString());
 		msgObj.dispInfoMessage("Java_AppManager", className,"-----Memory Layout----------------------------------------------------");  
-		long maxMem = runtime.maxMemory(), allocMem = runtime.totalMemory(), freeMem = runtime.freeMemory();
-		float freeMemKB = freeMem/1024.0f, allocMemKB = allocMem / 1024.0f, maxMemKB = maxMem/1024.0f, usedMemKB = (allocMemKB - freeMemKB);
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tMax mem Available: \t\t" + String.format("%.3f",maxMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tCurrent Available Free mem: \t" + String.format("%.3f",freeMemKB/1024.0f) +" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tTotal Allocated mem: \t\t" + String.format("%.3f",allocMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tUsed mem: \t\t\t" + String.format("%.3f",usedMemKB/1024.0f)+" MB");  
-		msgObj.dispInfoMessage("Java_AppManager", className,"\tTotal free mem: \t\t" +  String.format("%.3f",(maxMemKB - allocMemKB) / 1024.0f)+" MB"); 
-	
+		var memMap = getMemoryStatusMap();
+		float div = 1024.0f * 1024.0f;
+		for(int i=0;i< memMap.length; ++i) { 
+			msgObj.dispInfoMessage("Java_AppManager", className,"\t"+ String.format("%-40s", memDispText[i]) +String.format("%.3f", memMap[i]/div)+" MB");
+		}
 	}//checkMemorySetup
 	
 
