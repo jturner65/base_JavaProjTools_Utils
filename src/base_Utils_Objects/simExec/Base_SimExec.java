@@ -262,7 +262,7 @@ public abstract class Base_SimExec {
 		//Experimental trials are finished so 
 		if(expDoneNow) {//we've been conducting experiments and now we're done
 			String nowDispTime = currSim.getNowTimeForDisp();
-			long expDurMin= (expDurMSec/60000), expDirHour = expDurMin/60;
+			long expDurMin= (expDurMSec/60000L), expDirHour = expDurMin/60L;
 			//either done with all trials or ready to move on to next trial
 			if(curTrial >= numTrials) {//performed enough trials to check if done				
 				if (!execFlags.getConductSweepExps()) {//done with all trials, and not sweeping

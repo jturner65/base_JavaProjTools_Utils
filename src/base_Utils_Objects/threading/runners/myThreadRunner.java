@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import base_Utils_Objects.io.messaging.MessageObject;
 
 /**
- * manage a runner that will launch a number of callables suitable 
+ * This manages a runner that will launch a number of callables suitable 
  * for machine arch to manage multi-threaded calcs.  Instances of this class 
  * will manage instancing and invoking all threads to execute functionality 
  * in either MT or ST environment.
@@ -35,14 +35,20 @@ public abstract class myThreadRunner {
 	 */
 	protected final ExecutorService th_exec;	
 	/**
-	 * # of work units to perform - elements in list, possibly, to iterate through across multiple threads
+	 * # of work units to perform - elements in list, possibly, to iterate through across multiple threads. 
 	 */
 	protected int numWorkUnits;
 	
 	protected List<Future<Boolean>> ExMapperFtrs = new ArrayList<Future<Boolean>>();
 	protected List<Callable<Boolean>> ExMappers = new ArrayList<Callable<Boolean>>();
 
-	
+	/**
+	 * Build a thread runner - should be inherited by a Runnable
+	 * @param _th_exec thread executor to use
+	 * @param _canMT whether or not the conditions are acceptable for multithreading
+	 * @param _numThds the number of threads available for execution
+	 * @param _numWorkUnits the count of how many jobs/processes to perform, to be partitioned amongst threads evenly
+	 */
 	public myThreadRunner(ExecutorService _th_exec, boolean _canMT, int _numThds, int _numWorkUnits) {
 		msgObj = MessageObject.getInstance();
 		th_exec = _th_exec;
@@ -67,6 +73,7 @@ public abstract class myThreadRunner {
 	
 	/**
 	 * build callable object that will be invoked
+	 * @param ExMappers Arraylist of callables the new callable should be added to.
 	 * @param dataSt start idx in data
 	 * @param dataEnd end idx in data
 	 * @param pIdx thread/partition idx
