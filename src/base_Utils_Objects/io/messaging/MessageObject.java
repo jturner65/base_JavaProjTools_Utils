@@ -103,13 +103,32 @@ public class MessageObject {
 	 * Private constructor
 	 */
 	private MessageObject() {
-		if(supportsANSITerm == null) {supportsANSITerm = (System.console() != null && System.getenv().get("TERM") != null);	}
+		if(supportsANSITerm == null) {
+			//if no console then doesn't support ANSI
+//			if (System.console() == null) {			supportsANSITerm = false;} 
+//			else 
+			{				
+				//if windows
+		        String osName = System.getProperty("os.name");
+		        if (osName.startsWith("Windows")) {
+		            // Check for Windows 10 or later (crude check)
+		        	supportsANSITerm = (osName.startsWith("Windows 10") || osName.startsWith("Windows 11") || osName.startsWith("Windows Server"));
+		        } else {
+		            // Assume ANSI support for non-windows
+		        	supportsANSITerm = true;
+		        }
+			}			
+		}
 		if(timerMgr == null) {timerMgr = TimerManager.getInstance();}
 		consoleStrings = new ConcurrentLinkedDeque<String>();	
 		minConsoleDispCode = MsgCodes.debug1;
 		minLogDispCode = MsgCodes.debug1;		
 	}	
 	
+	
+	public boolean getSupportsANSITerm() {
+		return supportsANSITerm;
+	}
 	/**
 	 * Singleton Factory
 	 * @return
@@ -117,6 +136,7 @@ public class MessageObject {
 	public static MessageObject getInstance() {
 		if (msgObj == null) {
 			msgObj = new MessageObject();
+			msgObj.dispConsoleInfoMessage("MessageObject", "constructor", "Object created with supportsANSITerm == "+msgObj.supportsANSITerm);	
 			if(!termCondSet) {
 				//this is to make sure we always save the log file - this will be executed on shutdown, similar to code in a destructor in c++
 				Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -209,7 +229,7 @@ public class MessageObject {
 	 * @param _perLine
 	 */
 	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine) {
-		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  MsgCodes.info1, true, outputMethod);
+		_dispMessageAraInternal( _sAra,  _callingClass, _callingMethod, _perLine,  MsgCodes.info1, true, outputMethod);
 	}
 	/**
 	 * pass an array to display
@@ -220,7 +240,7 @@ public class MessageObject {
 	 * @param useCode
 	 */
 	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine, MsgCodes useCode) {
-		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, true, outputMethod);
+		_dispMessageAraInternal( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, true, outputMethod);
 	}
 	/**
 	 * show array of strings, either just to console or to applet window
@@ -232,7 +252,7 @@ public class MessageObject {
 	 * @param onlyConsole whether to only print to console or also to print to screen window, if UI is available
 	 */
 	public void dispMessageAra(String _callingClass, String _callingMethod, String[] _sAra, int _perLine, MsgCodes useCode, boolean onlyConsole) {	
-		_dispMessageAra( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, onlyConsole, outputMethod);
+		_dispMessageAraInternal( _sAra,  _callingClass, _callingMethod, _perLine,  useCode, onlyConsole, outputMethod);
 	}
 	
 	//pass single-line messages - only 1 display of timestamp and class/method prefix
@@ -477,7 +497,7 @@ public class MessageObject {
 			s+= _sAra[_row+j]+ "\t";}
 		return s;
 	}	
-	private void _dispMessageAra(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, int outputMethod) {			
+	private void _dispMessageAraInternal(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, int outputMethod) {			
 		switch(outputMethod) {
 			case 0 :{//just console
 				if(useCode.getVal() < this.minConsoleDispCode.getVal()) {return;}
@@ -498,10 +518,16 @@ public class MessageObject {
 					//neither mechanism should process this message
 					if(useCode.getVal() < this.minLogDispCode.getVal()) {return;} 
 					//use only log output for this message
-					_dispMessageAra(_sAra,_callingClass, _callingMethod, _perLine, useCode, onlyConsole, 1);					
+					for(int i=0;i<_sAra.length; i+=_perLine){
+						String s = buildLine(_sAra, _perLine, i);
+						_dispMessage_base_log(_callingClass, _callingMethod, s, useCode);
+					}						
 				} else if(useCode.getVal() < this.minLogDispCode.getVal()) {
 					//use only console output for this message
-					_dispMessageAra(_sAra,_callingClass, _callingMethod, _perLine, useCode, onlyConsole, 0);					
+					for(int i=0;i<_sAra.length; i+=_perLine){
+						String s = buildLine(_sAra, _perLine, i);
+						_dispMessage_base_console(_callingClass, _callingMethod, s, useCode,onlyConsole);
+					}					
 				} else {
 					for(int i=0;i<_sAra.length; i+=_perLine){
 						String s = buildLine(_sAra, _perLine, i);

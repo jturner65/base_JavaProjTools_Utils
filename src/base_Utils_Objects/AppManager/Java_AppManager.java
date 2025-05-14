@@ -270,7 +270,7 @@ public abstract class Java_AppManager {
 				String typeKey = keyVals.getKey();
 				msgObj.dispInfoMessage("Java_AppManager", className,"---------"+typeKey+"------------------------------------------------------");
 				for(var propKeyVals : vals.entrySet()) {
-					msgObj.dispInfoMessage("Java_AppManager", className,"\t"+typeKey+"."+propKeyVals.getKey()+": "+System.getProperty(propKeyVals.getValue()));
+					msgObj.dispInfoMessage("Java_AppManager", className,"\t"+propKeyVals.getKey()+": `"+System.getProperty(propKeyVals.getValue())+"`");
 				}
 				msgObj.dispInfoMessage("Java_AppManager", className,"");
 			}
