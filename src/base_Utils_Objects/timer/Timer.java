@@ -6,15 +6,21 @@ import java.time.Instant;
  * This class will provide timer/stop-watch functionality, by tracking an initial time and providing passed time data.
  * It is in turn owned and managed by a timeMgr
  * @author John Turner
- *
  */
 public class Timer {
 	/**
+	 * The represents the instant this timer started
+	 */
+	private final Instant startInstant;
+	/**
 	 * Absolute start time in millis marking this timer's start (milliseconds since 1/1/1970)
 	 */
-	private final long startTime;
+	private final long startMillis;
 	
-	public Timer(long _startTime) {	startTime = _startTime;}
+	public Timer(Instant _startInstant) {	
+		startInstant = _startInstant;
+		startMillis = startInstant.toEpochMilli(); 
+	}
 	
 	/**
 	 * returns a positive int value in millis of current time elapsed since timer started
@@ -33,7 +39,7 @@ public class Timer {
 	 * @param now value to check elapsed time against
 	 * @return
 	 */
-	public long getTimeElapsedInMillis(Instant now) {	return now.toEpochMilli() - startTime;}
+	public long getTimeElapsedInMillis(Instant now) {	return now.toEpochMilli() - startMillis;}
 	
 	/**
 	 * Get string representation of time elapsed in this timer
@@ -56,6 +62,6 @@ public class Timer {
 	 * Return this timer's start time in millis (milliseconds since 1/1/1970)
 	 * @return
 	 */
-	public long getStartTime() {return startTime;}
+	public long getStartTime() {return startMillis;}
 	
 }//class myTimer 

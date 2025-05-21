@@ -45,7 +45,7 @@ public class TimerManager {
 	private Object timeFmtLock = new Object();
 	private char curTimeToken = '?';
 	
-	private TimerManager(long _initialRunTime) {
+	private TimerManager(Instant _initialRunTime) {
 		progStartTimer = new Timer(_initialRunTime);
 		processTimers = new HashMap<String,Timer>();
 		setTimerStart(curTimerKey, _initialRunTime);
@@ -55,7 +55,7 @@ public class TimerManager {
 	
 	public static TimerManager getInstance() {
 		if (timeMgr == null) {
-			timeMgr = new TimerManager(Instant.now().toEpochMilli());
+			timeMgr = new TimerManager(Instant.now());
 		}
 		return timeMgr;
 	}//singleton factory
@@ -66,26 +66,26 @@ public class TimerManager {
 	/**
 	 * set now as start time for current process timer. Overwrites previously specified current process
 	 */
-	public void setCurTimerStart() {setTimerStart(curTimerKey, Instant.now().toEpochMilli());}
+	public void setCurTimerStart() {setTimerStart(curTimerKey, Instant.now());}
 	
 	/**
 	 * set start time for current process timer. Overwrites previously specified current process
 	 * @param startTime time in millis to use for current process
 	 */
-	public void setCurTimerStart(long startTime) {setTimerStart(curTimerKey, startTime);}
+	public void setCurTimerStart(long startTime) {setTimerStart(curTimerKey, Instant.ofEpochMilli(startTime));}
 	
 	/**
 	 * Build and save a named timer, using now as the start time.
 	 * @param processName the name to use for this timer
 	 */
-	public void setTimerStart(String timerName) {setTimerStart(timerName, Instant.now().toEpochMilli());}
+	public void setTimerStart(String timerName) {setTimerStart(timerName, Instant.now());}
 	
 	/**
 	 * Build and save a named timer.  If a timer exists with this name it will be overwritten
 	 * @param processName the name to use to reference the process
 	 * @param startTime time in millis from epoch to use as start of this timer
 	 */
-	public void setTimerStart(String timerName, long startTime) {
+	public void setTimerStart(String timerName, Instant startTime) {
 		synchronized(procTimerLock) {processTimers.put(timerName, new Timer(startTime));}
 	}
 	
@@ -159,7 +159,7 @@ public class TimerManager {
 	 * @param msElapsed millis to convert to time string format
 	 * @return
 	 */
-	public String getTimeStrFromPassedMillis(long msElapsed) {
+	private String getTimeStrFromPassedMillis(long msElapsed) {
 		long ms = msElapsed % 1000, sec = (msElapsed / 1000) % 60, min = (msElapsed / 60000) % 60, hr = (msElapsed / 3600000) % 24;	
 		String res = String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
 		return res;
