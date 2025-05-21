@@ -22,7 +22,7 @@ public class MessageObject {
 	 */
 	private boolean hasGraphics;
 	
-	
+	//whether the terminal supports ANSI color codes for message output
 	private Boolean supportsANSITerm = null;
 	private TimerManager timerMgr = null;
 	
@@ -32,12 +32,12 @@ public class MessageObject {
 	private static final String dispDelim = " | ", logDelim = ", ", newLineDelim = "\\r?\\n";
 	
 	/** 
-	 * int to encode what to do with output 
+	 * enum to encode what to do with output 
 	 * 0 : print to console 
 	 * 1 : save to log file - if logfilename is not set, will default to outputMethod==0 
 	 * 2 : both 
 	 */
-	private int outputMethod = 0;
+	private MsgOutputMethod outputMethod = MsgOutputMethod.Console;
 	
 	/**
 	 * Minimum message level to display to console.
@@ -64,8 +64,12 @@ public class MessageObject {
 	 */
 	private ConcurrentLinkedDeque<String> consoleStrings;
 	
+	/**
+	 * Structure to hold log messages before writing to file
+	 */
 	private ConcurrentSkipListMap<Long, String> logMsgQueue = new ConcurrentSkipListMap<Long, String>();	
 	private int logMsgQueueSize = 0;
+	//multithreading lock for flushing the log queue (writing to file)
 	private Object logMsgModLock = new Object();
 	
 	private static final int maxLogMsgSize = 50;
@@ -124,11 +128,7 @@ public class MessageObject {
 		minConsoleDispCode = MsgCodes.debug1;
 		minLogDispCode = MsgCodes.debug1;		
 	}	
-	
-	
-	public boolean getSupportsANSITerm() {
-		return supportsANSITerm;
-	}
+
 	/**
 	 * Singleton Factory
 	 * @return
@@ -186,20 +186,19 @@ public class MessageObject {
 		_dispMessage_base_console("MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
 	}//setOutputMethod
 	
-	public String getOutputMethod(int outputMethod) {		
-		switch(outputMethod) {
-		case 0 : return "Console output only.";
-		case 1 : return "Log output only to file specified.";
-		case 2 : return "Console output and log output to file";
-		default :return "Unknown output method :"+outputMethod;
-		}
-	}
+	
+	/**
+	 * Returns whether or not the currently running system supports ANSI encoding for console display.
+	 * @return
+	 */
+	public boolean getSupportsANSITerm() {		return supportsANSITerm;	}
+
 	
 	/**
 	 * finish any logging and write to file - this should be done when program closes
 	 */
 	public void FinishLog() {
-		if((outputMethod == 0) || (logMsgQueueSize==0)) { return;}
+		if((outputMethod == MsgOutputMethod.Console) || (logMsgQueueSize==0)) { return;}
 		if(fileName == null){
 			_dispMessage_base_console("MessageObject","FinishLog","Unknown/unspecified file name so unable to save log of " + logMsgQueueSize + " queued messages.", MsgCodes.warning1,true);
 			return;
@@ -293,28 +292,28 @@ public class MessageObject {
 	 * @param srcMethod name of calling method
 	 * @param msgText message text to print
 	 */
-	public void dispConsoleDebugMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.debug1,true, 0);	}	
+	public void dispConsoleDebugMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.debug1,true, MsgOutputMethod.Console);	}	
 	/**
 	 * default info message to console regardless of log level specified
 	 * @param srcClass name of calling class
 	 * @param srcMethod name of calling method
 	 * @param msgText message text to print
 	 */
-	public void dispConsoleInfoMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.info1,true, 0);	}	
+	public void dispConsoleInfoMessage(String srcClass, String srcMethod, String msgText){		_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.info1,true, MsgOutputMethod.Console);	}	
 	/**
 	 * default warning message to console regardless of log level specified
 	 * @param srcClass name of calling class
 	 * @param srcMethod name of calling method
 	 * @param msgText message text to print
 	 */
-	public void dispConsoleWarningMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.warning1,true, 0);	}	
+	public void dispConsoleWarningMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.warning1,true, MsgOutputMethod.Console);	}	
 	/**
 	 * default error message to console regardless of log level specified
 	 * @param srcClass name of calling class
 	 * @param srcMethod name of calling method
 	 * @param msgText message text to print
 	 */
-	public void dispConsoleErrorMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.error1,true, 0);	}	
+	public void dispConsoleErrorMessage(String srcClass, String srcMethod, String msgText){	_dispMessage_base(srcClass, srcMethod,msgText, MsgCodes.error1,true, MsgOutputMethod.Console);	}	
 
 	/////////////////////////
 	// Multi-line message displays	
@@ -472,15 +471,15 @@ public class MessageObject {
 		return src;
 	}//_processMsgCode
 
-	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, int outputMethod) {		
+	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, MsgOutputMethod outputMethod) {		
 		switch(outputMethod) {
-		case 0 :{
+		case Console :{
 			if(useCode.getVal() < this.minConsoleDispCode.getVal()) {return;}
 			_dispMessage_base_console(srcClass, srcMethod,msgText, useCode, onlyConsole);break;}	//just console
-		case 1 :{
+		case LogToFile :{
 			if(useCode.getVal() < this.minLogDispCode.getVal()) {return;}
 			_dispMessage_base_log(srcClass, srcMethod,msgText, useCode);break;}			//just log file
-		case 2 :{	//both log and console
+		case ConsoleAndLogToFile :{	//both log and console
 			if(useCode.getVal() >= this.minConsoleDispCode.getVal()) {
 				_dispMessage_base_console(srcClass, srcMethod,msgText, useCode, onlyConsole);	
 			}
@@ -497,23 +496,23 @@ public class MessageObject {
 			s+= _sAra[_row+j]+ "\t";}
 		return s;
 	}	
-	private void _dispMessageAraInternal(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, int outputMethod) {			
+	private void _dispMessageAraInternal(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, MsgOutputMethod outputMethod) {			
 		switch(outputMethod) {
-			case 0 :{//just console
+			case Console :{//just console
 				if(useCode.getVal() < this.minConsoleDispCode.getVal()) {return;}
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass, _callingMethod, s, useCode,onlyConsole);
 				}			
 				break;}			//just console
-			case 1 :{//just log file
+			case LogToFile :{//just log file
 				if(useCode.getVal() < this.minLogDispCode.getVal()) {return;}
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_log(_callingClass, _callingMethod, s, useCode);
 				}			
 				break;}			//just log file
-			case 2 :{	//both log and console
+			case ConsoleAndLogToFile :{	//both log and console
 				if(useCode.getVal() < this.minConsoleDispCode.getVal()) {
 					//neither mechanism should process this message
 					if(useCode.getVal() < this.minLogDispCode.getVal()) {return;} 
