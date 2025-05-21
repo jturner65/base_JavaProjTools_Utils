@@ -16,7 +16,7 @@ public enum MsgOutputMethod {
 	};	
 	private static Map<Integer, MsgOutputMethod> map = new HashMap<Integer, MsgOutputMethod>(); 
 	static { for (MsgOutputMethod enumV : MsgOutputMethod.values()) { map.put(enumV.ordinal(), enumV);}}
-	public int getVal(){return ordinal();}
+	public int getOrdinal() {return ordinal();}
 	public static MsgOutputMethod getEnumByIndex(int idx){return map.get(idx);}
 	public static MsgOutputMethod getEnumFromValue(int idx){return map.get(idx);}
 	public static int getNumVals(){return map.size();}						//get # of values in enum

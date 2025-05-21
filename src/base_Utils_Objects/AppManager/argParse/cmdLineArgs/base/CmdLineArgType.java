@@ -25,7 +25,7 @@ public enum CmdLineArgType {
 	public static String[] getListOfTypes() {return _typeName;}
 	private static Map<Integer, CmdLineArgType> map = new HashMap<Integer, CmdLineArgType>(); 
 	static { for (CmdLineArgType enumV : CmdLineArgType.values()) { map.put(enumV.ordinal(), enumV);}}
-	public int getVal(){return ordinal();}
+	public int getOrdinal() {return ordinal();}
 	public static CmdLineArgType getEnumByIndex(int idx){return map.get(idx);}
 	public static CmdLineArgType getEnumFromValue(int idx){return map.get(idx);}
 	public static int getNumVals(){return map.size();}						//get # of values in enum

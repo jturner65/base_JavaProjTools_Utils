@@ -2,7 +2,6 @@ package base_Utils_Objects.io.messaging;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -27,9 +26,18 @@ public class MessageObject {
 	private TimerManager timerMgr = null;
 	
 	/**
-	 * delimiter for display or output to log
+	 * delimiters for display to console or output to log.
+	 * First is between components of date/time stamp
+	 * 2nd is between owning class and owning method
+	 * 3rd is between method and message.
 	 */
-	private static final String dispDelim = " | ", logDelim = ", ", newLineDelim = "\\r?\\n";
+	private static final String[] dispDelims = new String[]{" | ", "::"," : "};
+	// commas for log files
+	private static final String[] logDelims = new String[]{", ",", ",", "};
+	// newline regex delim to split strings on
+	private static final String newLineDelim = "\\r?\\n";
+	
+	
 	
 	/** 
 	 * enum to encode what to do with output 
@@ -75,34 +83,7 @@ public class MessageObject {
 	private static final int maxLogMsgSize = 50;
 	
 	private static boolean termCondSet = false;
-	
-	/**
-	 * map to hold pre-computed console color strings for output high-lighting
-	 */
-	private static final HashMap<MsgCodes, String> msgClrPrefix = new HashMap<MsgCodes, String>();
-	static {
-		msgClrPrefix.put(MsgCodes.debug1, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLACK);			//basic debug printout
-		msgClrPrefix.put(MsgCodes.debug2, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.GREEN);
-		msgClrPrefix.put(MsgCodes.debug3, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.YELLOW);		
-		msgClrPrefix.put(MsgCodes.debug4, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE);
-		msgClrPrefix.put(MsgCodes.debug5, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.MAGENTA);	
-		msgClrPrefix.put(MsgCodes.info1, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.WHITE);			//basic informational printout
-		msgClrPrefix.put(MsgCodes.info2, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.CYAN);
-		msgClrPrefix.put(MsgCodes.info3, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.YELLOW);		
-		msgClrPrefix.put(MsgCodes.info4, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.GREEN);
-		msgClrPrefix.put(MsgCodes.info5, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.CYAN_BOLD);	
-		msgClrPrefix.put(MsgCodes.warning1, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLACK_BOLD);
-		msgClrPrefix.put(MsgCodes.warning2, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_BOLD);	
-		msgClrPrefix.put(MsgCodes.warning3, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLACK_UNDERLINED);
-		msgClrPrefix.put(MsgCodes.warning4, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_UNDERLINED);	
-		msgClrPrefix.put(MsgCodes.warning5, ""+ConsoleCLR.WHITE_BACKGROUND+ConsoleCLR.BLUE_BRIGHT);
-		msgClrPrefix.put(MsgCodes.error1, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_UNDERLINED);	
-		msgClrPrefix.put(MsgCodes.error2, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_BOLD);		
-		msgClrPrefix.put(MsgCodes.error3, ""+ConsoleCLR.RED_BACKGROUND_BRIGHT+ConsoleCLR.BLACK_BOLD);	
-		msgClrPrefix.put(MsgCodes.error4, ""+ConsoleCLR.WHITE_BACKGROUND_BRIGHT+ConsoleCLR.RED_BRIGHT);	
-		msgClrPrefix.put(MsgCodes.error5, ""+ConsoleCLR.BLACK_BACKGROUND+ConsoleCLR.RED_BOLD_BRIGHT);
-	}
-	
+		
 	/**
 	 * Private constructor
 	 */
@@ -158,8 +139,20 @@ public class MessageObject {
 	 * @param _outputMethod
 	 */
 	public synchronized void setOutputMethod(String _fileName, int _outputMethod) {
+		MsgOutputMethod outputMethodEnum = _outputMethod >= MsgOutputMethod.ConsoleAndLogToFile.ordinal() 
+				? MsgOutputMethod.ConsoleAndLogToFile : (_outputMethod<=MsgOutputMethod.Console.ordinal()) 
+						? MsgOutputMethod.Console : MsgOutputMethod.getEnumByIndex(_outputMethod);
+		setOutputMethod(_fileName, outputMethodEnum);
+	}
+	
+	/**
+	 * define how the messages from this and all other messageObj should be handled, and pass a file name if a log is to be saved
+	 * @param _fileName
+	 * @param _outputMethod
+	 */
+	public synchronized void setOutputMethod(String _fileName, MsgOutputMethod _outputMethod) {
 		fileName = _fileName;
-		if((_outputMethod<=0) || (fileName == null) || (fileName.length() < 3)) {outputMethod = 0;fileIO = null;}
+		if((fileName == null) || (fileName.length() < 3)) {outputMethod = MsgOutputMethod.Console;fileIO = null;}
 		else {
 			File fileNameFile = new File(fileName);
 			String fName = fileNameFile.getName();
@@ -180,10 +173,10 @@ public class MessageObject {
 		    		_dispMessage_base_console("MessageObject","setOutputMethod","Success making logging directory :"+dirName+" for log file `"+fName, MsgCodes.info1,true);
 		    	}
 		    }
-			outputMethod = (_outputMethod >= 3 ? 2 : _outputMethod);
+			outputMethod = _outputMethod;
 			if (fileIO==null) {	fileIO = new FileIOManager(this, "Logger");}	
 		}
-		_dispMessage_base_console("MessageObject","setOutputMethod","Setting log level :  "+ outputMethod + " : " + getOutputMethod(outputMethod)+ " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
+		_dispMessage_base_console("MessageObject","setOutputMethod","Setting log level :  "+ outputMethod.toString() + " | File name specified for log (if used) : " + fileName +" | File IO Object created : " + (fileIO !=null), MsgCodes.info1,true);
 	}//setOutputMethod
 	
 	
@@ -216,7 +209,7 @@ public class MessageObject {
 	 * Return current wall time and time from execution start in string form
 	 * @return string representation of wall time and time from start separated by a |
 	 */
-	public String getCurrWallTimeAndTimeFromStart() {return timerMgr.getWallTimeAndTimeFromStart(dispDelim);}
+	public String getCurrWallTimeAndTimeFromStart() {return timerMgr.getWallTimeAndTimeFromStart(dispDelims[0]);}
 	public String getCurrWallTime() { return timerMgr.getCurrWallTime();}
 	public String getElapsedTimeStrForTimer(String timerName) { return timerMgr.getElapsedTimeStrForTimer(timerName);}
 	public String getDateTimeStringForFileName() {return timerMgr.getDateTimeStringForFileName();}
@@ -466,7 +459,7 @@ public class MessageObject {
 	private String _processMsgCode(String src, MsgCodes useCode) {
 		if (!supportsANSITerm) {return src;}
 		//find appropriate color code for message
-		String clrStr = msgClrPrefix.get(useCode);
+		String clrStr = useCode.getColorCode();
 		if (clrStr != null) {		return clrStr + src + ConsoleCLR.RESET.toString();}
 		return src;
 	}//_processMsgCode
@@ -474,16 +467,16 @@ public class MessageObject {
 	private void _dispMessage_base(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole, MsgOutputMethod outputMethod) {		
 		switch(outputMethod) {
 		case Console :{
-			if(useCode.getVal() < this.minConsoleDispCode.getVal()) {return;}
+			if(useCode.getOrdinal() < this.minConsoleDispCode.getOrdinal()) {return;}
 			_dispMessage_base_console(srcClass, srcMethod,msgText, useCode, onlyConsole);break;}	//just console
 		case LogToFile :{
-			if(useCode.getVal() < this.minLogDispCode.getVal()) {return;}
+			if(useCode.getOrdinal() < this.minLogDispCode.getOrdinal()) {return;}
 			_dispMessage_base_log(srcClass, srcMethod,msgText, useCode);break;}			//just log file
 		case ConsoleAndLogToFile :{	//both log and console
-			if(useCode.getVal() >= this.minConsoleDispCode.getVal()) {
+			if(useCode.getOrdinal() >= this.minConsoleDispCode.getOrdinal()) {
 				_dispMessage_base_console(srcClass, srcMethod,msgText, useCode, onlyConsole);	
 			}
-			if(useCode.getVal() >= this.minLogDispCode.getVal()) {
+			if(useCode.getOrdinal() >= this.minLogDispCode.getOrdinal()) {
 				_dispMessage_base_log(srcClass, srcMethod,msgText, useCode);
 			}
 			break;}		
@@ -499,29 +492,29 @@ public class MessageObject {
 	private void _dispMessageAraInternal(String[] _sAra, String _callingClass, String _callingMethod, int _perLine, MsgCodes useCode, boolean onlyConsole, MsgOutputMethod outputMethod) {			
 		switch(outputMethod) {
 			case Console :{//just console
-				if(useCode.getVal() < this.minConsoleDispCode.getVal()) {return;}
+				if(useCode.getOrdinal() < this.minConsoleDispCode.getOrdinal()) {return;}
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_console(_callingClass, _callingMethod, s, useCode,onlyConsole);
 				}			
 				break;}			//just console
 			case LogToFile :{//just log file
-				if(useCode.getVal() < this.minLogDispCode.getVal()) {return;}
+				if(useCode.getOrdinal() < this.minLogDispCode.getOrdinal()) {return;}
 				for(int i=0;i<_sAra.length; i+=_perLine){
 					String s = buildLine(_sAra, _perLine, i);
 					_dispMessage_base_log(_callingClass, _callingMethod, s, useCode);
 				}			
 				break;}			//just log file
 			case ConsoleAndLogToFile :{	//both log and console
-				if(useCode.getVal() < this.minConsoleDispCode.getVal()) {
+				if(useCode.getOrdinal() < this.minConsoleDispCode.getOrdinal()) {
 					//neither mechanism should process this message
-					if(useCode.getVal() < this.minLogDispCode.getVal()) {return;} 
+					if(useCode.getOrdinal() < this.minLogDispCode.getOrdinal()) {return;} 
 					//use only log output for this message
 					for(int i=0;i<_sAra.length; i+=_perLine){
 						String s = buildLine(_sAra, _perLine, i);
 						_dispMessage_base_log(_callingClass, _callingMethod, s, useCode);
 					}						
-				} else if(useCode.getVal() < this.minLogDispCode.getVal()) {
+				} else if(useCode.getOrdinal() < this.minLogDispCode.getOrdinal()) {
 					//use only console output for this message
 					for(int i=0;i<_sAra.length; i+=_perLine){
 						String s = buildLine(_sAra, _perLine, i);
@@ -538,9 +531,14 @@ public class MessageObject {
 		}//switch
 	}//dispMessageAra
 	
+	private String _buildDispMessage(String srcClass, String srcMethod, String msgText, MsgCodes useCode, String[] delims) {
+		String timeStr = timerMgr.getWallTimeAndTimeFromStart(delims[0]);
+		return timeStr + delims[0] +useCode.getPrefixStr() +delims[0] + srcClass + delims[1] + srcMethod + delims[2] + msgText;		
+	}
+	
 	private void _dispMessage_base_console(String srcClass, String srcMethod, String msgText, MsgCodes useCode, boolean onlyConsole) {	
-		String timeStr = timerMgr.getWallTimeAndTimeFromStart(dispDelim);
-		String msg = _processMsgCode(timeStr + dispDelim + srcClass + "::" + srcMethod + ":" + msgText, useCode);
+		String baseStr = _buildDispMessage(srcClass, srcMethod, msgText, useCode, dispDelims);
+		String msg = _processMsgCode(baseStr, useCode);
 		printAndBuildConsoleStrs(msg, (onlyConsole || !hasGraphics));
 	}	
 
@@ -553,8 +551,7 @@ public class MessageObject {
 	 */
 	private void _dispMessage_base_log(String srcClass, String srcMethod, String msgText, MsgCodes useCode) {
 		long timeKey = timerMgr.getMillisFromProgStart();
-		String timeStr = timerMgr.getWallTimeAndTimeFromStart(logDelim);
-		String baseStr = timeStr + logDelim + srcClass + logDelim + srcMethod + logDelim + msgText;
+		String baseStr = _buildDispMessage(srcClass, srcMethod, msgText, useCode, logDelims);
 		synchronized(logMsgModLock){
 			++logMsgQueueSize;
 			logMsgQueue.put(timeKey, baseStr);		

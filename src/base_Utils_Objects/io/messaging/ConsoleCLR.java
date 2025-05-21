@@ -75,6 +75,7 @@ public enum ConsoleCLR {
     private ConsoleCLR(String _val){value = _val;}     
 	static { for (ConsoleCLR enumV : ConsoleCLR.values()) { valmap.put(enumV.value, enumV); map.put(enumV.ordinal(), enumV);}}
 	public String getVal(){return value;}
+	public int getOrdinal() {return ordinal();}
 	public static ConsoleCLR getEnumByIndex(int idx) {return map.get(idx);} 
 	public static ConsoleCLR getEnumFromValue(String idx){return valmap.get(idx);}
 	public static int getNumVals(){return valmap.size();}						//get # of values in enum
