@@ -196,7 +196,7 @@ public abstract class Java_AppManager {
 	 *  
 	 * @return
 	 */
-	public final int getNumThreadsAvailable() {return Runtime.getRuntime().availableProcessors();}
+	public static final int getNumThreadsAvailable() {return Runtime.getRuntime().availableProcessors();}
 	
 	//Used by memory status array
 	public static final int maxMemIDX = 0;
