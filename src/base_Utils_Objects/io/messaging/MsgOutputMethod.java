@@ -11,7 +11,7 @@ public enum MsgOutputMethod {
 	Console,
 	LogToFile,
 	ConsoleAndLogToFile;
-	private final String[] _typeExplanation = new String[] {
+	private final String[] _typeExplanation = new String[]{
 			"Console output only.", "Log output only to file specified.", "Console output and log output to file."
 	};	
 	private static Map<Integer, MsgOutputMethod> map = new HashMap<Integer, MsgOutputMethod>(); 

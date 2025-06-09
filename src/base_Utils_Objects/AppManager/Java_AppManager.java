@@ -206,7 +206,7 @@ public abstract class Java_AppManager {
 	public static final int usedMemIDX = 4;
 
 	
-	public static final String[] memDispText = new String[] {
+	public static final String[] memDispText = new String[]{
 		"Max Memory Available to JVM:",           
 		"Total Allocated Memory to JVM:",       
 		"Available Memory for the JVM to grow:",
@@ -214,7 +214,7 @@ public abstract class Java_AppManager {
 		"Current Used Memory:"                
 	};
 	
-	public static final String[] memDispTextAbbrev = new String[] {
+	public static final String[] memDispTextAbbrev = new String[]{
 			"Max JVM","TTL JVM","Space JVM","Free","Used"
 	};
 	

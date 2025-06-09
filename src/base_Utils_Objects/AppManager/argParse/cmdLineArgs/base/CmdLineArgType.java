@@ -14,14 +14,14 @@ public enum CmdLineArgType {
 	FloatType, 
 	DoubleType, 
 	BoolType;
-	private final String[] _typeExplanation = new String[] {
+	private final String[] _typeExplanation = new String[]{
 			"String-based command line arg",
 			"Character-based command line arg",
 			"Integer-based command line arg",
 			"Float-based command line arg",
 			"Double-based command line arg",
 			"Boolean-based command line arg"};
-	private static final String[] _typeName = new String[] {"String Type","Char Type","Integer Type","Float Type","Double Type","Boolean Type"};
+	private static final String[] _typeName = new String[]{"String Type","Char Type","Integer Type","Float Type","Double Type","Boolean Type"};
 	public static String[] getListOfTypes() {return _typeName;}
 	private static Map<Integer, CmdLineArgType> map = new HashMap<Integer, CmdLineArgType>(); 
 	static { for (CmdLineArgType enumV : CmdLineArgType.values()) { map.put(enumV.ordinal(), enumV);}}
