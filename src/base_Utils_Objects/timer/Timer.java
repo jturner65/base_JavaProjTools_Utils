@@ -8,60 +8,60 @@ import java.time.Instant;
  * @author John Turner
  */
 public class Timer {
-	/**
-	 * The represents the instant this timer started
-	 */
-	private final Instant startInstant;
-	/**
-	 * Absolute start time in millis marking this timer's start (milliseconds since 1/1/1970)
-	 */
-	private final long startMillis;
-	
-	public Timer(Instant _startInstant) {	
-		startInstant = _startInstant;
-		startMillis = startInstant.toEpochMilli(); 
-	}
-	
-	/**
-	 * returns a positive int value in millis of current time elapsed since timer started
-	 * @return
-	 */
-	public long getTimeElapsedInMillis() {	return getTimeElapsedInMillis(Instant.now());}
-	
-	/**
-	 * Get string representation of time elapsed in this timer
-	 * @return
-	 */
-	public String getTimeElapsedString() { return getTimeStrFromPassedMillis(getTimeElapsedInMillis());}
-	
-	/**
-	 * returns a positive int value in millis of passed now's time elapsed since timer started.
-	 * @param now value to check elapsed time against
-	 * @return
-	 */
-	public long getTimeElapsedInMillis(Instant now) {	return now.toEpochMilli() - startMillis;}
-	
-	/**
-	 * Get string representation of time elapsed in this timer
-	 * @return
-	 */
-	public String getTimeElapsedString(Instant now) { return getTimeStrFromPassedMillis(getTimeElapsedInMillis(now));}
+    /**
+     * The represents the instant this timer started
+     */
+    private final Instant startInstant;
+    /**
+     * Absolute start time in millis marking this timer's start (milliseconds since 1/1/1970)
+     */
+    private final long startMillis;
+    
+    public Timer(Instant _startInstant) {    
+        startInstant = _startInstant;
+        startMillis = startInstant.toEpochMilli(); 
+    }
+    
+    /**
+     * returns a positive int value in millis of current time elapsed since timer started
+     * @return
+     */
+    public long getTimeElapsedInMillis() {    return getTimeElapsedInMillis(Instant.now());}
+    
+    /**
+     * Get string representation of time elapsed in this timer
+     * @return
+     */
+    public String getTimeElapsedString() { return getTimeStrFromPassedMillis(getTimeElapsedInMillis());}
+    
+    /**
+     * returns a positive int value in millis of passed now's time elapsed since timer started.
+     * @param now value to check elapsed time against
+     * @return
+     */
+    public long getTimeElapsedInMillis(Instant now) {    return now.toEpochMilli() - startMillis;}
+    
+    /**
+     * Get string representation of time elapsed in this timer
+     * @return
+     */
+    public String getTimeElapsedString(Instant now) { return getTimeStrFromPassedMillis(getTimeElapsedInMillis(now));}
 
-	/**
-	 * get a decent display of milliseconds elapsed
-	 * @param msElapsed millis to convert to time string format
-	 * @return
-	 */
-	private String getTimeStrFromPassedMillis(long msElapsed) {
-		long ms = msElapsed % 1000, sec = (msElapsed / 1000) % 60, min = (msElapsed / 60000) % 60, hr = (msElapsed / 3600000) % 24;	
-		String res = String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
-		return res;
-	}//getTimeStrFromPassedMillis
-	
-	/**
-	 * Return this timer's start time in millis (milliseconds since 1/1/1970)
-	 * @return
-	 */
-	public long getStartTime() {return startMillis;}
-	
+    /**
+     * get a decent display of milliseconds elapsed
+     * @param msElapsed millis to convert to time string format
+     * @return
+     */
+    private String getTimeStrFromPassedMillis(long msElapsed) {
+        long ms = msElapsed % 1000, sec = (msElapsed / 1000) % 60, min = (msElapsed / 60000) % 60, hr = (msElapsed / 3600000) % 24;    
+        String res = String.format("%02d:%02d:%02d.%03d", hr, min, sec, ms);
+        return res;
+    }//getTimeStrFromPassedMillis
+    
+    /**
+     * Return this timer's start time in millis (milliseconds since 1/1/1970)
+     * @return
+     */
+    public long getStartTime() {return startMillis;}
+    
 }//class myTimer 

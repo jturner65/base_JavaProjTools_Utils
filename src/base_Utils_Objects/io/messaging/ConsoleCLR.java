@@ -67,19 +67,19 @@ public enum ConsoleCLR {
     MAGENTA_BACKGROUND_BRIGHT("\033[0;105m"),   // MAGENTA
     CYAN_BACKGROUND_BRIGHT("\033[0;106m"),      // CYAN
     WHITE_BACKGROUND_BRIGHT("\033[0;107m");     // WHITE
-	
+    
     private final String value;
     private static Map<String, ConsoleCLR> valmap = new HashMap<String, ConsoleCLR>(); 
     private static Map<Integer, ConsoleCLR> map = new HashMap<Integer, ConsoleCLR>(); 
-	
+    
     private ConsoleCLR(String _val){value = _val;}     
-	static { for (ConsoleCLR enumV : ConsoleCLR.values()) { valmap.put(enumV.value, enumV); map.put(enumV.ordinal(), enumV);}}
-	public String getVal(){return value;}
-	public int getOrdinal() {return ordinal();}
-	public static ConsoleCLR getEnumByIndex(int idx) {return map.get(idx);} 
-	public static ConsoleCLR getEnumFromValue(String idx){return valmap.get(idx);}
-	public static int getNumVals(){return valmap.size();}						//get # of values in enum
-	@Override
+    static { for (ConsoleCLR enumV : ConsoleCLR.values()) { valmap.put(enumV.value, enumV); map.put(enumV.ordinal(), enumV);}}
+    public String getVal(){return value;}
+    public int getOrdinal() {return ordinal();}
+    public static ConsoleCLR getEnumByIndex(int idx) {return map.get(idx);} 
+    public static ConsoleCLR getEnumFromValue(String idx){return valmap.get(idx);}
+    public static int getNumVals(){return valmap.size();}                        //get # of values in enum
+    @Override
     public String toString() { return value; }
 }//console printout colors enum
 
