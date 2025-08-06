@@ -1,7 +1,9 @@
 package base_Utils_Objects.io.messaging;
 
 import java.util.*;
-
+/**
+ * Console color definitions
+ */
 public enum ConsoleCLR {
     RESET("\033[0m"),
     // Regular Colors
