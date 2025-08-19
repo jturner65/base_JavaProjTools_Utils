@@ -7,59 +7,115 @@ import base_Utils_Objects.tools.flags.Base_BoolFlags;
 
 /**
  * This class will provide a mechanism to share data (i.e. from a UI) within different components of an application.
+ * It will also manage data change communications to guarantee data sync
  * @author John Turner
- *
  */
 public abstract class Base_DataAdapter {    
     /**
-     * map to hold UI-driven int values, using the UI object idx's as keys
+     * Map to hold UI-driven int values, using the UI object idx's as keys
      */
     protected Map<Integer, Integer> intValues;
     /**
-     * map to hold UI-driven float values, using the UI object idx's as keys
+     * Map to hold UI-driven float values, using the UI object idx's as keys
      */
     protected Map<Integer, Float> floatValues;
     /**
-     * map to hold UI-driven boolean values, using the UI object flags' idx's as keys 
+     * Map to hold UI-driven boolean values, using the UI object flags' idx's as keys 
      */
-    protected Map<Integer, Boolean> boolValues;    
+    protected Map<Integer, Boolean> boolValues;
+    /**
+     * Constructor. Builds empty maps
+     */
     public Base_DataAdapter() {initMaps();}
+    /**
+     * Constructor. Initializes maps of Integers, Floats and Booleans
+     * @param _iVals 
+     * @param _fVals
+     * @param _bVals
+     */
     public Base_DataAdapter(Map<Integer, Integer> _iVals, Map<Integer, Float> _fVals, Map<Integer, Boolean> _bVals) {
         initMaps();
         setAllVals(_iVals, _fVals, _bVals);
     }
-    
+    /**
+     * Copy constructor
+     * @param _otr
+     */
     public Base_DataAdapter(Base_DataAdapter _otr) {
         initMaps();
         setAllVals(_otr);
     }
-    
+    /**
+     * Map initializer
+     */
     protected final void initMaps() {
         intValues = new HashMap<Integer, Integer>();
         floatValues = new HashMap<Integer, Float>(); 
         boolValues = new HashMap<Integer, Boolean>();
     }
-    
+    /**
+     * Set the values of this adapter to match those of the passed adapter
+     * @param _otr
+     */
     public final void setAllVals(Base_DataAdapter _otr) {
         setAllVals(_otr.intValues,_otr.floatValues,_otr.boolValues);        
     }
     
+    /**
+     * Set values for all components. Used on initialization
+     * @param _intValues
+     * @param _floatValues
+     * @param _boolValues
+     */
     public final void setAllVals(Map<Integer, Integer> _intValues, Map<Integer, Float> _floatValues,Map<Integer, Boolean> _boolValues) {
         if(_intValues!=null) {for (Map.Entry<Integer, Integer> entry : _intValues.entrySet()) {intValues.put(entry.getKey(), entry.getValue());}}
         if(_floatValues!=null) {for (Map.Entry<Integer, Float> entry : _floatValues.entrySet()) {floatValues.put(entry.getKey(), entry.getValue());}}
         if(_boolValues!=null) {for (Map.Entry<Integer, Boolean> entry : _boolValues.entrySet()) {boolValues.put(entry.getKey(), entry.getValue());}}
     }
     
+    /**
+     * Compare the stored integer value at the given index with the passed value and return whether they are equal.
+     * @param idx
+     * @param value
+     * @return Returns false if values are not equal or if no value is present at given index.
+     */
     public final boolean compareIntValue(Integer idx, Integer value) {    return (intValues.get(idx) != null) && (intValues.get(idx).equals(value));    }
+    /**
+     * Compare the stored floating point value at the given index with the passed value and return whether they are equal
+     * @param idx
+     * @param value
+     * @return Returns false if values are not equal or if no value is present at given index.
+     */
     public final boolean compareFloatValue(Integer idx, Float value) {    return (floatValues.get(idx) != null) && (floatValues.get(idx).equals(value));    }
+    /**
+     * Compare the stored boolean value at the given index with the passed value and return whether they are equal
+     * @param idx
+     * @param value
+     * @return Returns false if values are not equal or if no value is present at given index.
+     */
     public final boolean compareBoolValue(Integer idx, Boolean value) {    return (boolValues.get(idx) != null) && (boolValues.get(idx).equals(value));    }
 
     
     /**
-     * Getters
+     * Accessors
+     */
+    /**
+     * Get the boolean value stored at the given integer index
+     * @param idx
+     * @return
      */
     public final boolean getBoolValue(int idx) {return boolValues.get(idx);}
+    /**
+     * Get the integer value stored at the given integer index
+     * @param idx
+     * @return
+     */
     public final int getIntValue(int idx) {return intValues.get(idx);  }
+    /**
+     * Get the floating point value stored at the given integer index
+     * @param idx
+     * @return
+     */
     public final float getFloatValue(int idx) {return floatValues.get(idx);  }
     
     /**
@@ -69,10 +125,22 @@ public abstract class Base_DataAdapter {
     public final boolean getIsDebug() {return boolValues.get(Base_BoolFlags.debugIDX);}
     
     /**
-     * Setters
-     */    
+     * Set the integer value at the given index to the passed value. Does not update any owner or implementation.
+     * @param idx
+     * @param value
+     */
     public final void setIntValue(Integer idx, Integer value){    intValues.put(idx,value);  }
+    /**
+     * Set the floating-point value at the given index to the passed value. Does not update any owner or implementation.
+     * @param idx
+     * @param value
+     */
     public final void setFloatValue(Integer idx, Float value){    floatValues.put(idx,value);}
+    /**
+     * Set the boolean value at the given index to the passed value. Does not update any owner or implementation.
+     * @param idx
+     * @param value
+     */
     public final void setBoolValue(Integer idx, Boolean value){    boolValues.put(idx,value);}
     
     /**
