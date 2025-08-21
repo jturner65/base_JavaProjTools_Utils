@@ -58,7 +58,10 @@ public abstract class Java_AppManager {
      * runtime arguments key-value pair
      */
     protected HashMap<String, Object> argsMap;
-    
+    /**
+     * App Constructor
+     * @param _hasGraphicalUI
+     */
     public Java_AppManager(boolean _hasGraphicalUI) {
         var ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         _isHeadless = ge.isHeadlessInstance();
@@ -161,6 +164,17 @@ public abstract class Java_AppManager {
      * @return
      */
     protected abstract boolean showMachineData();
+    
+    
+    /**
+     * return CWD of this application
+     * @return
+     */
+    public String getApplicationPath() {
+        String res = System.getProperty("user.dir");
+        return res;
+    }
+
     
     protected void setArgsMap(String[] _passedArgs) {
         var tmpArgsMap = buildCmdLineArgs(_passedArgs);
